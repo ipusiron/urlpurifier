@@ -1,0 +1,9 @@
+# ChatGPT/Claude用のローカル設定ファイル
+.claude/
+*.log
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/

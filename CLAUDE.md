@@ -4,33 +4,83 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-URLPurifier is a web tool designed to clean URLs by removing affiliate and tracking parameters. The tool helps users get clean, direct links without unnecessary tracking information.
+URLPurifier is a client-side web tool that cleans URLs by removing affiliate links and tracking parameters. The tool helps users share clean, direct links without unnecessary tracking information. Part of the "100 Security Tools with Generative AI" project (Day 039).
 
-## Project Status
+## Project Architecture
 
-This is a new project in initial setup phase. Currently contains only:
-- README.md (Japanese description)
-- MIT License
-- .gitignore configured for Claude/ChatGPT local settings, macOS, and VSCode
-- .nojekyll file (indicating potential GitHub Pages deployment)
+### File Structure
+```
+/
+├── index.html      # Main HTML with form interface
+├── script.js       # Core URL cleaning logic
+├── style.css       # Dark-themed modern UI styles  
+├── README.md       # Japanese documentation
+└── CLAUDE.md       # This file
+```
 
-## Development Notes
+### Core Features
+1. **URL Cleaning**: Removes tracking parameters (utm_*, fbclid, gclid, etc.)
+2. **Amazon Optimization**: Special mode to convert Amazon URLs to shortest `/dp/ASIN` format
+3. **Batch Processing**: Handles multiple URLs at once (line-by-line)
+4. **Privacy-First**: All processing done client-side, no server communication
 
-### Language Context
-- Primary documentation is in Japanese
-- Tool name "URLをクリーン化し、アフィリエイトやトラッキングパラメータを除去するWebツール" translates to "Web tool for cleaning URLs and removing affiliate and tracking parameters"
+### Technical Implementation
 
-### Deployment Indication
-- Presence of `.nojekyll` suggests this may be intended for GitHub Pages deployment
-- Consider implementing as a static site with client-side JavaScript for URL processing
+#### URL Processing (script.js)
+- **Parameter Blocking Lists**:
+  - `COMMON_PREFIX_BLOCKS`: Parameters starting with specific strings (utm_, vero_, pk_)
+  - `COMMON_EXACT_BLOCKS`: Exact parameter matches (fbclid, gclid, etc.)
+  - `STRONG_EXACT_BLOCKS`: Additional aggressive blocking when enabled
+  - `AMAZON_EXACT_BLOCKS`: Amazon-specific parameters (tag, ref, etc.)
 
-### Implementation Considerations
-When implementing this tool, consider:
-- Client-side JavaScript for privacy (no server-side logging of URLs)
-- Support for common tracking parameters (utm_*, fbclid, gclid, etc.)
-- Support for affiliate parameters from major platforms (Amazon, etc.)
-- Clean, simple UI for ease of use
-- Option to preserve certain parameters if needed
+- **Amazon ASIN Extraction**: Handles multiple URL patterns:
+  - `/dp/ASIN`
+  - `/gp/product/ASIN`
+  - `/product/ASIN`
+  - Query parameter `asin=ASIN`
 
-### Local Settings
-The project includes a `.claude/settings.local.json` with custom permissions and hooks for local development environment.
+- **Key Functions**:
+  - `cleanOne()`: Processes single URL
+  - `cleanBatch()`: Handles multiple URLs preserving line structure
+  - `stripParams()`: Removes unwanted query parameters
+  - `normalizeAmazon()`: Converts to `/dp/ASIN` format
+
+#### UI/UX (index.html, style.css)
+- Dark theme with gradient background
+- Responsive card-based layout
+- Two checkboxes for modes:
+  - Amazon affiliate removal mode
+  - Strong blocklist mode
+- Three action buttons: Clean, Copy, Clear
+
+## Development Commands
+
+No build process required - pure HTML/CSS/JavaScript. For local development:
+```bash
+# Open directly in browser
+open index.html
+
+# Or use any local server
+python -m http.server 8000
+# Then visit http://localhost:8000
+```
+
+## Deployment
+
+Deployed via GitHub Pages at: https://ipusiron.github.io/urlpurifier/
+- `.nojekyll` file present for GitHub Pages compatibility
+- No build/compilation needed
+
+## Testing Considerations
+
+When testing URL cleaning:
+1. Test various Amazon URL formats (different locales: .com, .co.jp, etc.)
+2. Verify ASIN extraction from different URL patterns
+3. Test multi-line input preservation
+4. Verify parameter removal completeness
+5. Check edge cases (malformed URLs, missing protocols)
+
+## Language Context
+- UI and documentation primarily in Japanese
+- Code comments in Japanese
+- Part of educational project series on security tools

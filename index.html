@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>URLPurifier - URL浄化ツール</title>
+  <link rel="stylesheet" href="./style.css" />
+  <meta name="description" content="URLに含まれるトラッキングやアフィリエイト要素を削除し、シンプルで純粋なリンクに整えるクライアントサイドWebツール。Amazon専用最短化モード搭載。">
+</head>
+<body>
+  <header class="site-header">
+    <h1>URLPurifier</h1>
+    <p class="subtitle">URL浄化ツール（Amazon専用最短化モード搭載）</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>クリーン化</h2>
+      <div class="form-row">
+        <label for="inputUrls" class="label">URLを貼り付け（複数行OK）</label>
+        <textarea id="inputUrls" class="textarea" rows="8" placeholder="例：
+https://www.amazon.co.jp/dp/XXXXXXXXXX?tag=abc-22&ref=abc&utm_source=x
+https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
+      </div>
+
+      <div class="options">
+        <label class="checkbox">
+          <input type="checkbox" id="amazonMode" />
+          <span>Amazonアフィリエイト除去・最短化モード（/dp/ASIN に変換）</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="strictBlocklist" />
+          <span>強力ブロックリスト（より多くの一般的トラッキングを削除）</span>
+        </label>
+      </div>
+
+      <div class="buttons">
+        <button id="btnClean" class="btn primary">クリーン化</button>
+        <button id="btnCopy" class="btn">結果をコピー</button>
+        <button id="btnClear" class="btn ghost">クリア</button>
+      </div>
+
+      <div class="form-row">
+        <label for="outputUrls" class="label">結果</label>
+        <textarea id="outputUrls" class="textarea" rows="8" readonly placeholder="ここにクリーン化結果が表示されます"></textarea>
+      </div>
+
+      <details class="details">
+        <summary>何を削除する？（概要）</summary>
+        <ul>
+          <li>共通：utm_* / fbclid / gclid / dclid / msclkid などのトラッキング系</li>
+          <li>Amazonモード：tag / ref などを除去し、/dp/ASIN へ正規化</li>
+          <li>強力ブロックリスト：メール配信・MA系や広告計測由来の代表的なパラメーターも追加で削除</li>
+        </ul>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer">
+      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/urlpurifier" target="_blank" rel="noopener noreferrer">ipusiron/urlpurifier</a> ）
+    </div>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>

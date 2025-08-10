@@ -27,9 +27,9 @@ SNSやブログで誰かにAmazonやニュースサイトのリンクを共有�
 
 ## 📸 スクリーンショット
 
-> ![ダミー](assets/screenshot.png)  
+> ![Amazonリンクの浄化例](assets/screenshot.png)  
 >
-> *ダミー*
+> *Amazonリンクの浄化例*
 
 ---
 

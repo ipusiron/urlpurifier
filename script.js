@@ -445,7 +445,7 @@ function updateUrlPreview(text) {
     <div class="preview-list">
       ${longUrls.slice(0, 3).map(url => {
         const truncated = truncateUrl(url, 60);
-        return `<div class="preview-item">${truncated}</div>`;
+        return `<div class="preview-item">${escapeHtml(truncated)}</div>`;
       }).join('')}
       ${longUrls.length > 3 ? `<div class="preview-more">他${longUrls.length - 3}個...</div>` : ''}
     </div>
@@ -458,6 +458,17 @@ function hideUrlPreview() {
   if (previewEl) {
     previewEl.style.display = 'none';
   }
+}
+
+/** HTMLエスケープ（XSS対策） */
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== 'string') return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /** URLを短縮表示 */

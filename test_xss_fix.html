@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>XSS修正テスト</title>
+</head>
+<body>
+  <h1>XSS修正テスト</h1>
+  <div id="result"></div>
+
+  <script>
+    /** HTMLエスケープ（XSS対策） */
+    function escapeHtml(unsafe) {
+      if (typeof unsafe !== 'string') return '';
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // テストケース
+    const testCases = [
+      {
+        input: 'http://example.com/?x=<img src=x onerror=alert(1)>',
+        description: 'XSS攻撃コード'
+      },
+      {
+        input: 'http://example.com/?name=<script>alert("XSS")</script>',
+        description: 'script タグ'
+      },
+      {
+        input: 'http://example.com/?data=<div onload=alert(1)>test</div>',
+        description: 'イベントハンドラ付きタグ'
+      },
+      {
+        input: 'http://example.com/?normal=test&foo=bar',
+        description: '通常のURL'
+      }
+    ];
+
+    const resultDiv = document.getElementById('result');
+    let html = '<table border="1"><tr><th>説明</th><th>入力</th><th>エスケープ後</th><th>安全性</th></tr>';
+
+    testCases.forEach(test => {
+      const escaped = escapeHtml(test.input);
+      const isSafe = !escaped.includes('<') && !escaped.includes('>');
+      html += `<tr>
+        <td>${test.description}</td>
+        <td>${escapeHtml(test.input)}</td>
+        <td>${escapeHtml(escaped)}</td>
+        <td style="color: ${isSafe ? 'green' : 'red'}">${isSafe ? '✓ 安全' : '✗ 危険'}</td>
+      </tr>`;
+    });
+
+    html += '</table>';
+    resultDiv.innerHTML = html;
+
+    console.log('すべてのテストケースがエスケープされました');
+  </script>
+</body>
+</html>

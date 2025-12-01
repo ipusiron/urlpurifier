@@ -1,3 +1,40 @@
+<!--
+---
+id: day039
+slug: urlpurifier
+
+title: "URLPurifier"
+
+subtitle_ja: "URL浄化ツール"
+subtitle_en: "URL Cleaning Tool"
+
+description_ja: "URLに含まれるトラッキングパラメーターやアフィリエイトタグを除去し、純粋でクリーンなリンクを生成するクライアントサイドWebツール。Amazon専用最短化モード搭載。"
+description_en: "A client-side web tool that removes tracking parameters and affiliate tags from URLs to generate clean, privacy-friendly links. Features Amazon URL shortening mode."
+
+category_ja:
+  - プライバシー
+  - Webセキュリティ
+category_en:
+  - Privacy
+  - Web Security
+
+difficulty: 1
+
+tags:
+  - URL
+  - tracking
+  - privacy
+  - affiliate
+  - Amazon
+  - client-side
+
+repo_url: "https://github.com/ipusiron/urlpurifier"
+demo_url: "https://ipusiron.github.io/urlpurifier/"
+
+hub: true
+---
+-->
+
 # URLPurifier - URL浄化ツール
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/ipusiron/urlpurifier?style=social)
@@ -15,7 +52,7 @@
 SNSやブログで誰かにAmazonやニュースサイトのリンクを共有するとき、  
 「やたら長いリンク」「アフィリエイトタグやトラッキング情報がべったり付いているリンク」に出会ったことはありませんか？
 
-**URLPurifier**は、そんな冗長なURLを1クリックで浄化し、**純粋で安全なリンクだけ**を残すことにこだわったWebツールです。
+**URLPurifier** は、そんな冗長なURLを1クリックで浄化し、**純粋で安全なリンクだけ** を残すことにこだわったWebツールです。
 
 ---
 

@@ -4,83 +4,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-URLPurifier is a client-side web tool that cleans URLs by removing affiliate links and tracking parameters. The tool helps users share clean, direct links without unnecessary tracking information. Part of the "100 Security Tools with Generative AI" project (Day 039).
+URLPurifier is a client-side web tool that cleans URLs by removing affiliate links and tracking parameters. Part of the "100 Security Tools with Generative AI" project (Day 039). All processing is done entirely in-browser with no server communication.
 
-## Project Architecture
+## Development
 
-### File Structure
-```
-/
-├── index.html      # Main HTML with form interface
-├── script.js       # Core URL cleaning logic
-├── style.css       # Dark-themed modern UI styles  
-├── README.md       # Japanese documentation
-└── CLAUDE.md       # This file
-```
+No build process required - pure HTML/CSS/JavaScript.
 
-### Core Features
-1. **URL Cleaning**: Removes tracking parameters (utm_*, fbclid, gclid, etc.)
-2. **Amazon Optimization**: Special mode to convert Amazon URLs to shortest `/dp/ASIN` format
-3. **Batch Processing**: Handles multiple URLs at once (line-by-line)
-4. **Privacy-First**: All processing done client-side, no server communication
-
-### Technical Implementation
-
-#### URL Processing (script.js)
-- **Parameter Blocking Lists**:
-  - `COMMON_PREFIX_BLOCKS`: Parameters starting with specific strings (utm_, vero_, pk_)
-  - `COMMON_EXACT_BLOCKS`: Exact parameter matches (fbclid, gclid, etc.)
-  - `STRONG_EXACT_BLOCKS`: Additional aggressive blocking when enabled
-  - `AMAZON_EXACT_BLOCKS`: Amazon-specific parameters (tag, ref, etc.)
-
-- **Amazon ASIN Extraction**: Handles multiple URL patterns:
-  - `/dp/ASIN`
-  - `/gp/product/ASIN`
-  - `/product/ASIN`
-  - Query parameter `asin=ASIN`
-
-- **Key Functions**:
-  - `cleanOne()`: Processes single URL
-  - `cleanBatch()`: Handles multiple URLs preserving line structure
-  - `stripParams()`: Removes unwanted query parameters
-  - `normalizeAmazon()`: Converts to `/dp/ASIN` format
-
-#### UI/UX (index.html, style.css)
-- Dark theme with gradient background
-- Responsive card-based layout
-- Two checkboxes for modes:
-  - Amazon affiliate removal mode
-  - Strong blocklist mode
-- Three action buttons: Clean, Copy, Clear
-
-## Development Commands
-
-No build process required - pure HTML/CSS/JavaScript. For local development:
 ```bash
-# Open directly in browser
-open index.html
+# Open directly in browser (Windows)
+start index.html
 
 # Or use any local server
 python -m http.server 8000
-# Then visit http://localhost:8000
 ```
 
-## Deployment
-
 Deployed via GitHub Pages at: https://ipusiron.github.io/urlpurifier/
-- `.nojekyll` file present for GitHub Pages compatibility
-- No build/compilation needed
+
+## Technical Architecture
+
+### URL Processing Flow (script.js)
+
+**Parameter Blocking Lists** (case-insensitive):
+- `COMMON_PREFIX_BLOCKS`: Prefix matches (utm_, vero_, pk_, pf_rd_)
+- `COMMON_EXACT_BLOCKS`: Exact matches (fbclid, gclid, msclkid, etc.)
+- `STRONG_EXACT_BLOCKS`: Additional aggressive blocking for "詳細除去モード" (ttclid, twclid, campaign, etc.)
+- `AMAZON_EXACT_BLOCKS`: Amazon-specific (tag, ref, linkCode, creative, psc, smid, keywords, qid, etc.)
+
+**Key Functions**:
+- `cleanOne(raw, opts)`: Single URL processing - returns `{cleaned, original, error, changed, stats}`
+- `cleanBatch(multiline, opts)`: Multi-line processing with aggregated statistics
+- `stripParams(urlObj, {strong, amazonMode})`: Parameter removal logic
+- `normalizeAmazon(urlObj)`: Converts Amazon URLs to `/dp/ASIN` format
+- `extractASIN(urlObj)`: Handles patterns: `/dp/ASIN`, `/gp/product/ASIN`, `/product/ASIN`, `?asin=ASIN`
+
+**Amazon Domain Detection**: Regex `AMAZON_HOST_RE` supports .com, .co.jp, .co.uk, .de, .fr, .it, .es, .ca, .com.mx, .com.au, .nl, .sg, .in, .ae, .sa, .se, .pl, .eg, .tr
+
+### UI Components
+
+- **Theme Toggle**: Light/dark mode with localStorage persistence (`theme` key)
+- **Statistics Display**: Shows processed URLs, changes made, and parameters removed
+- **URL Preview**: Real-time preview for long URLs (>80 chars) with 300ms debounce
+- **Help Modal**: Detailed parameter documentation accessible via "?" button
+- **Toast Notifications**: Feedback for actions (success/error/info types)
+
+### Form Element IDs
+- `inputUrls`: Source textarea
+- `outputUrls`: Result textarea (readonly)
+- `amazonMode`: Amazon mode checkbox
+- `strictBlocklist`: Strong/detailed removal mode checkbox (Note: HTML uses `strictBlocklist`, code variable is `$strong`)
 
 ## Testing Considerations
 
-When testing URL cleaning:
-1. Test various Amazon URL formats (different locales: .com, .co.jp, etc.)
-2. Verify ASIN extraction from different URL patterns
-3. Test multi-line input preservation
-4. Verify parameter removal completeness
-5. Check edge cases (malformed URLs, missing protocols)
+- Amazon URL formats across locales (.com, .co.jp, etc.)
+- ASIN extraction from various URL patterns
+- Multi-line batch processing
+- Edge cases: malformed URLs, missing protocols (auto-prefixes https://)
+- XSS safety: `escapeHtml()` sanitizes preview output
 
 ## Language Context
-- UI and documentation primarily in Japanese
+- UI and documentation in Japanese
 - Code comments in Japanese
-- Part of educational project series on security tools

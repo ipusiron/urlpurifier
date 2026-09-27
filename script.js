@@ -290,7 +290,10 @@ function restoreReadableHost(urlString, urlObj, originalInput) {
   if (decodedHost === urlObj.hostname) return urlString;
 
   const port = urlObj.port ? `:${urlObj.port}` : "";
-  return urlString.replace(`//${urlObj.host}`, `//${decodedHost}${port}`);
+  // 利用者名が付いていると // の直後がホスト名ではない。
+  // その場合は @ の後ろを置き換える。
+  const prefix = (urlObj.username || urlObj.password) ? "@" : "//";
+  return urlString.replace(`${prefix}${urlObj.host}`, `${prefix}${decodedHost}${port}`);
 }
 
 /**

@@ -169,7 +169,7 @@ base-uri 'self'; form-action 'self'; object-src 'none';
 npm test
 ```
 
-57件のテストがあり、次を確かめます。
+58件のテストがあり、次を確かめます。
 
 - `javascript:`などのスキームを出力しないこと、偽のURLを作らないこと
 - サイト別ルールが、そのサイトでだけ効くこと

@@ -49,3 +49,15 @@ test("読める文字で入力したホスト名は、その形で返す", () =>
 test("ポートが付いていても、ホスト名を戻せる", () => {
   assert.equal(api.cleanOne("https://日本語.jp:8443/x", defaultOptions).cleaned, "https://日本語.jp:8443/x");
 });
+
+test("利用者名が付いていても、ホスト名を戻せる", () => {
+  // // の直後がホスト名ではないので、@ の後ろを置き換える必要がある
+  assert.equal(
+    api.cleanOne("https://www.google.com@日本語.jp/go", defaultOptions).cleaned,
+    "https://www.google.com@日本語.jp/go"
+  );
+  assert.equal(
+    api.cleanOne("https://user@日本語.jp:8443/x", defaultOptions).cleaned,
+    "https://user@日本語.jp:8443/x"
+  );
+});

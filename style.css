@@ -13,6 +13,15 @@
   --radius-sm: 10px;
   --textarea-bg: #0f1320;
   --modal-overlay: rgba(0,0,0,0.8);
+  --warn-bg: #2a2010;
+  --warn-border: #b3831f;
+  --warn-text: #ffd479;
+  --report-note: #c3cbd9;
+  /* 見出し下の説明は青い地の上に載るので、--muted では 3.89 しかない */
+  --subtitle: #ccd4e0;
+  /* 白文字を載せるボタンの地色。--accent のままだと 2.63〜2.92 */
+  --btn-bg: #175fb5;
+  --btn-bg-strong: #12539e;
 }
 
 /* ライトモード */
@@ -20,7 +29,7 @@
   --bg: #f5f7fa;
   --card: #ffffff;
   --text: #1a202c;
-  --muted: #718096;
+  --muted: #636f7f;
   --accent: #2b6cb0;
   --accent-strong: #2c5282;
   --border: #e2e8f0;
@@ -28,6 +37,13 @@
   --shadow: 0 10px 30px rgba(0,0,0,0.1);
   --textarea-bg: #f7fafc;
   --modal-overlay: rgba(0,0,0,0.5);
+  --warn-bg: #fff8e6;
+  --warn-border: #b3831f;
+  --warn-text: #7a4f00;
+  --report-note: #4a5568;
+  --subtitle: #636f7f;
+  --btn-bg: #2b6cb0;
+  --btn-bg-strong: #2c5282;
 }
 
 /* 背景グラデーションの調整 */
@@ -227,7 +243,8 @@ body{
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  /* 中身の最小幅で押し広げられないよう、下限を画面幅に合わせる */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
   gap: 12px;
 }
 
@@ -431,7 +448,7 @@ body{
 }
 
 .btn.primary{
-  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  background: linear-gradient(180deg, var(--btn-bg), var(--btn-bg-strong));
   border-color: transparent;
   color: white;
   font-weight: 700;
@@ -541,7 +558,7 @@ footer{
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--btn-bg);
   color: white;
   border: none;
   font-size: 20px;
@@ -699,5 +716,221 @@ footer{
   .modal-content{
     max-height: 100vh;
     border-radius: 0;
+  }
+}
+
+/* 消したものと、貼る前に見ておきたい点 */
+.report-panel{
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.report-panel.risk-panel{
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+}
+
+.report-title{
+  margin: 0 0 .6rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.report-list{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: .5rem;
+}
+
+.report-item{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .4rem .6rem;
+  min-width: 0;
+}
+
+.report-name{
+  padding: .1rem .4rem;
+  background: var(--textarea-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.report-note,
+.risk-body{
+  color: var(--report-note);
+  font-size: .92rem;
+  overflow-wrap: anywhere;
+}
+
+.report-where,
+.report-count{
+  color: var(--report-note);
+  font-size: .85rem;
+}
+
+.risk-item{
+  display: grid;
+  gap: .2rem;
+}
+
+.risk-label{
+  color: var(--warn-text);
+}
+
+.risk-detail{
+  padding: .1rem .4rem;
+  background: var(--textarea-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+  justify-self: start;
+  max-width: 100%;
+}
+
+/* 操作要素の当たり判定をそろえる（指で触れる大きさにする） */
+.btn,
+.btn-copy-output,
+.btn-theme,
+.btn-help,
+.modal-close{
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* チェックボックスは見た目を変えず、ラベルごと触れる範囲を広げる */
+.checkbox,
+label:has(> input[type="checkbox"]){
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 44px;
+}
+
+input[type="checkbox"]{
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* hidden 属性で出し入れする（style属性を使うとCSPのstyle-src-attrに触れる） */
+[hidden]{
+  display: none !important;
+}
+
+/* ヘルプ内の補足ブロック（以前はstyle属性で書かれていた） */
+.help-callout{
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+}
+
+/* 見出し下の説明は、青い地の上に載るので専用の色にする */
+.subtitle{
+  color: var(--subtitle);
+}
+
+/* 言語切り替え */
+.btn-lang{
+  position: fixed;
+  top: 32px;
+  right: calc(50% - 460px + 72px);
+  min-height: 44px;
+  padding: .4rem .9rem;
+  border-radius: 999px;
+  background: var(--ghost);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: .9rem;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.btn-lang:hover,
+.btn-lang:focus-visible{
+  border-color: var(--accent);
+}
+
+@media (max-width: 1000px){
+  .btn-lang{
+    position: static;
+    display: block;
+    margin: .5rem auto 0;
+  }
+}
+
+/* フッターも青い地の上に載るので、説明文と同じ色にする */
+.footer{
+  color: var(--subtitle);
+}
+
+/* ヘッダー右上の操作をまとめて並べる。
+   以前は3つとも position: fixed で右端からの距離を個別に指定していたため、
+   言語ボタンを足したときに重なって文字が切れていた。 */
+.header-actions{
+  position: fixed;
+  top: 24px;
+  right: max(20px, calc(50% - 460px + 20px));
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  z-index: 100;
+}
+
+.header-actions .btn-theme,
+.header-actions .btn-help,
+.header-actions .btn-lang{
+  position: static;
+  right: auto;
+  top: auto;
+  margin: 0;
+}
+
+.header-actions .btn-lang{
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px){
+  .header-actions{
+    position: static;
+    justify-content: center;
+    margin: .75rem auto 0;
+  }
+
+  .header-actions .btn-lang{
+    display: inline-block;
+    margin: 0;
+  }
+}
+
+/* トーストは画面下へ出す。
+   右上のままだと、ヘッダーのボタン（テーマ・言語・ヘルプ）に重なる。 */
+.toast{
+  top: auto;
+  bottom: -100px;
+  right: 20px;
+  left: auto;
+}
+
+.toast.show{
+  top: auto;
+  bottom: 20px;
+}
+
+@media (max-width: 600px){
+  .toast{
+    right: 12px;
+    left: 12px;
+    max-width: none;
   }
 }

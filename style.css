@@ -13,6 +13,10 @@
   --radius-sm: 10px;
   --textarea-bg: #0f1320;
   --modal-overlay: rgba(0,0,0,0.8);
+  --warn-bg: #2a2010;
+  --warn-border: #b3831f;
+  --warn-text: #ffd479;
+  --report-note: #c3cbd9;
 }
 
 /* ライトモード */
@@ -28,6 +32,10 @@
   --shadow: 0 10px 30px rgba(0,0,0,0.1);
   --textarea-bg: #f7fafc;
   --modal-overlay: rgba(0,0,0,0.5);
+  --warn-bg: #fff8e6;
+  --warn-border: #b3831f;
+  --warn-text: #7a4f00;
+  --report-note: #4a5568;
 }
 
 /* 背景グラデーションの調整 */
@@ -700,4 +708,82 @@ footer{
     max-height: 100vh;
     border-radius: 0;
   }
+}
+
+/* 消したものと、貼る前に見ておきたい点 */
+.report-panel{
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.report-panel.risk-panel{
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+}
+
+.report-title{
+  margin: 0 0 .6rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.report-list{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: .5rem;
+}
+
+.report-item{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .4rem .6rem;
+  min-width: 0;
+}
+
+.report-name{
+  padding: .1rem .4rem;
+  background: var(--textarea-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.report-note,
+.risk-body{
+  color: var(--report-note);
+  font-size: .92rem;
+  overflow-wrap: anywhere;
+}
+
+.report-where,
+.report-count{
+  color: var(--report-note);
+  font-size: .85rem;
+}
+
+.risk-item{
+  display: grid;
+  gap: .2rem;
+}
+
+.risk-label{
+  color: var(--warn-text);
+}
+
+.risk-detail{
+  padding: .1rem .4rem;
+  background: var(--textarea-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+  justify-self: start;
+  max-width: 100%;
 }

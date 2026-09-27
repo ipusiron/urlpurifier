@@ -41,7 +41,7 @@ The common blocks, the strict list, the Amazon list and `SITE_PARAM_RULES` all f
 URLs, parameter names and host names go through `createElement` and `textContent`. They must not reach `innerHTML` or an attribute string.
 
 **6. No inline handlers and no `style` attributes.**
-Show and hide through the `hidden` attribute, not `element.style.display` — Chrome counts the latter as an inline style and it triggered a real `style-src-attr` violation under this CSP. Geometry that must be computed goes through the CSSOM.
+A `style="..."` attribute in the markup, or `setAttribute("style", ...)`, is blocked by `style-src` and produced a real `style-src-attr` violation here. Writing through the CSSOM (`element.style.display = ...`) is *not* blocked — that was measured in both directions. Show and hide through the `hidden` attribute anyway, because it keeps the state in one place and reads better than scattering display values; use the CSSOM only for geometry that has to be computed.
 
 **7. No external resources or network calls.**
 No CDN, font, API or analytics. `connect-src 'none'` stays.

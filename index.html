@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>URLPurifier - URL浄化ツール</title>
+  <!-- セキュリティヘッダー。frame-ancestors はmetaでは効かないため、
+       クリックジャッキングの扱いはREADMEに書く -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; base-uri 'self'; form-action 'self'; object-src 'none';">
+  <meta name="referrer" content="no-referrer">
   <link rel="stylesheet" href="./style.css" />
   <meta name="description" content="URLに含まれるトラッキングやアフィリエイト要素を削除し、シンプルで純粋なリンクに整えるクライアントサイドWebツール。Amazon専用最短化モード搭載。">
 </head>
@@ -11,7 +15,7 @@
   <header class="site-header">
     <h1>URLPurifier</h1>
     <p class="subtitle">URL浄化ツール（Amazon専用最短化モード搭載）</p>
-    <button id="btnTheme" class="btn-theme" aria-label="テーマ切り替え" title="ライト/ダークモード切り替え">
+    <button id="btnTheme" type="button" class="btn-theme" aria-label="テーマ切り替え" title="ライト/ダークモード切り替え">
       <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"></circle>
         <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -27,7 +31,7 @@
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
       </svg>
     </button>
-    <button id="btnHelp" class="btn-help" aria-label="ヘルプ">?</button>
+    <button id="btnHelp" type="button" class="btn-help" aria-label="ヘルプ">?</button>
   </header>
 
   <main class="container">
@@ -52,14 +56,14 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
       </div>
 
       <div class="buttons">
-        <button id="btnClean" class="btn primary">クリーン化</button>
-        <button id="btnClear" class="btn ghost">クリア</button>
+        <button id="btnClean" type="button" class="btn primary">クリーン化</button>
+        <button id="btnClear" type="button" class="btn ghost">クリア</button>
       </div>
 
       <div class="form-row">
         <div class="label-with-button">
           <label for="outputUrls" class="label">結果</label>
-          <button id="btnCopy" class="btn-copy-output">結果をコピー</button>
+          <button id="btnCopy" type="button" class="btn-copy-output">結果をコピー</button>
         </div>
         <textarea id="outputUrls" class="textarea" rows="8" readonly placeholder="ここにクリーン化結果が表示されます"></textarea>
       </div>
@@ -82,11 +86,11 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
   </footer>
 
   <!-- ヘルプモーダル -->
-  <div id="helpModal" class="modal">
+  <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>URLPurifier ヘルプ</h2>
-        <button class="modal-close" aria-label="閉じる">&times;</button>
+        <h2 id="helpModalTitle">URLPurifier ヘルプ</h2>
+        <button class="modal-close" type="button" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
         <section>
@@ -132,7 +136,7 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
           </ul>
 
           <h4>🔥 詳細除去モードとは？</h4>
-          <p style="background: rgba(255,165,0,0.1); padding: 12px; border-radius: 8px; margin: 10px 0;">
+          <p class="help-callout">
             <strong>詳細除去モード</strong>は、通常モードでは削除しない追加のパラメーターを削除するオプションです。<br>
             より徹底的にトラッキングを除去したい場合に有効化してください。
           </p>
@@ -224,7 +228,7 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
   </div>
 
   <!-- Toast -->
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="./script.js"></script>
 </body>

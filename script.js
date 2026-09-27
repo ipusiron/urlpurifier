@@ -370,10 +370,10 @@ function ensurePanel(id, className) {
 function updateRemovedReport(removed) {
   const panel = ensurePanel("removedReport", "report-panel");
   if (!removed || removed.length === 0) {
-    panel.style.display = "none";
+    panel.hidden = true;
     return;
   }
-  panel.style.display = "block";
+  panel.hidden = false;
 
   const counts = new Map();
   for (const item of removed) {
@@ -409,10 +409,10 @@ function updateRemovedReport(removed) {
 function updateRiskReport(risks) {
   const panel = ensurePanel("riskReport", "report-panel risk-panel");
   if (!risks || risks.length === 0) {
-    panel.style.display = "none";
+    panel.hidden = true;
     return;
   }
-  panel.style.display = "block";
+  panel.hidden = false;
 
   const seen = new Set();
   const rows = [];
@@ -715,26 +715,56 @@ function setupUI() {
   const $modal = document.getElementById("helpModal");
   const $modalClose = $modal.querySelector(".modal-close");
 
-  $btnHelp.addEventListener("click", () => {
-    $modal.classList.add("show");
-  });
+  // 開いた元の要素へ戻すために控える
+  let lastFocused = null;
 
-  $modalClose.addEventListener("click", () => {
+  const focusableInModal = () =>
+    [...$modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+      .filter((node) => node.offsetParent !== null);
+
+  function openModal() {
+    lastFocused = document.activeElement;
+    $modal.classList.add("show");
+    $modal.setAttribute("aria-hidden", "false");
+    $modalClose.focus();
+  }
+
+  function closeModal() {
+    if (!$modal.classList.contains("show")) return;
     $modal.classList.remove("show");
-  });
+    $modal.setAttribute("aria-hidden", "true");
+    // 開く前に触っていた要素へ戻す。戻さないと、閉じたあとにページの先頭へ飛ぶ
+    if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
+    lastFocused = null;
+  }
+
+  $btnHelp.addEventListener("click", openModal);
+  $modalClose.addEventListener("click", closeModal);
 
   // モーダル外クリックで閉じる
   $modal.addEventListener("click", (e) => {
-    if (e.target === $modal) {
-      $modal.classList.remove("show");
+    if (e.target === $modal) closeModal();
+  });
+
+  // 開いている間はTabがモーダルの外へ出ないようにする
+  $modal.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const items = focusableInModal();
+    if (items.length === 0) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
     }
   });
 
   // Escキーで閉じる
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && $modal.classList.contains("show")) {
-      $modal.classList.remove("show");
-    }
+    if (e.key === "Escape") closeModal();
   });
 
   // テーマ切り替え
@@ -804,11 +834,11 @@ function updateStats(stats) {
   }
   
   if (stats.totalUrls === 0) {
-    statsEl.style.display = 'none';
+    statsEl.hidden = true;
     return;
   }
   
-  statsEl.style.display = 'block';
+  statsEl.hidden = false;
   statsEl.innerHTML = `
     <div class="stats-grid">
       <div class="stat-item">
@@ -857,7 +887,7 @@ function updateUrlPreview(text) {
     inputRow.appendChild(previewEl);
   }
 
-  previewEl.style.display = 'block';
+  previewEl.hidden = false;
   previewEl.innerHTML = `
     <div class="preview-header">
       <span class="preview-title">📝 プレビュー（${longUrls.length}個の長いURL）</span>
@@ -876,7 +906,7 @@ function updateUrlPreview(text) {
 function hideUrlPreview() {
   const previewEl = document.getElementById("urlPreview");
   if (previewEl) {
-    previewEl.style.display = 'none';
+    previewEl.hidden = true;
   }
 }
 
@@ -932,7 +962,7 @@ function showLoading(message) {
     </div>
   `;
   
-  loadingEl.style.display = 'flex';
+  loadingEl.hidden = false;
   setTimeout(() => {
     loadingEl.classList.add('show');
   }, 10);
@@ -944,7 +974,7 @@ function hideLoading() {
   if (loadingEl) {
     loadingEl.classList.remove('show');
     setTimeout(() => {
-      loadingEl.style.display = 'none';
+      loadingEl.hidden = true;
     }, 300);
   }
 }

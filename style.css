@@ -17,6 +17,11 @@
   --warn-border: #b3831f;
   --warn-text: #ffd479;
   --report-note: #c3cbd9;
+  /* 見出し下の説明は青い地の上に載るので、--muted では 3.89 しかない */
+  --subtitle: #ccd4e0;
+  /* 白文字を載せるボタンの地色。--accent のままだと 2.63〜2.92 */
+  --btn-bg: #175fb5;
+  --btn-bg-strong: #12539e;
 }
 
 /* ライトモード */
@@ -24,7 +29,7 @@
   --bg: #f5f7fa;
   --card: #ffffff;
   --text: #1a202c;
-  --muted: #718096;
+  --muted: #636f7f;
   --accent: #2b6cb0;
   --accent-strong: #2c5282;
   --border: #e2e8f0;
@@ -36,6 +41,9 @@
   --warn-border: #b3831f;
   --warn-text: #7a4f00;
   --report-note: #4a5568;
+  --subtitle: #636f7f;
+  --btn-bg: #2b6cb0;
+  --btn-bg-strong: #2c5282;
 }
 
 /* 背景グラデーションの調整 */
@@ -235,7 +243,8 @@ body{
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  /* 中身の最小幅で押し広げられないよう、下限を画面幅に合わせる */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
   gap: 12px;
 }
 
@@ -439,7 +448,7 @@ body{
 }
 
 .btn.primary{
-  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  background: linear-gradient(180deg, var(--btn-bg), var(--btn-bg-strong));
   border-color: transparent;
   color: white;
   font-weight: 700;
@@ -549,7 +558,7 @@ footer{
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--btn-bg);
   color: white;
   border: none;
   font-size: 20px;
@@ -786,4 +795,47 @@ footer{
   overflow-wrap: anywhere;
   justify-self: start;
   max-width: 100%;
+}
+
+/* 操作要素の当たり判定をそろえる（指で触れる大きさにする） */
+.btn,
+.btn-copy-output,
+.btn-theme,
+.btn-help,
+.modal-close{
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* チェックボックスは見た目を変えず、ラベルごと触れる範囲を広げる */
+.checkbox,
+label:has(> input[type="checkbox"]){
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 44px;
+}
+
+input[type="checkbox"]{
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* hidden 属性で出し入れする（style属性を使うとCSPのstyle-src-attrに触れる） */
+[hidden]{
+  display: none !important;
+}
+
+/* ヘルプ内の補足ブロック（以前はstyle属性で書かれていた） */
+.help-callout{
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+}
+
+/* 見出し下の説明は、青い地の上に載るので専用の色にする */
+.subtitle{
+  color: var(--subtitle);
 }

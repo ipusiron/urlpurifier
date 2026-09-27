@@ -934,3 +934,75 @@ input[type="checkbox"]{
     max-width: none;
   }
 }
+
+/* 連れているURL自体の問題 */
+.risk-target-note{
+  color: var(--warn-text);
+  font-size: .9rem;
+}
+
+/* 自分で消したい名前 */
+.custom-rules{
+  margin-top: .5rem;
+}
+
+.custom-rules .input{
+  width: 100%;
+  min-height: 44px;
+  padding: .6rem .8rem;
+  background: var(--textarea-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: .95rem;
+}
+
+.custom-rules-note{
+  margin: .3rem 0 0;
+  color: var(--report-note);
+  font-size: .85rem;
+}
+
+/* URLの部品 */
+.structure-list{
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: .35rem .8rem;
+  margin: 0;
+}
+
+.structure-key{
+  color: var(--report-note);
+  font-size: .9rem;
+}
+
+.structure-key.structure-warn{
+  color: var(--warn-text);
+  font-weight: 700;
+}
+
+.structure-value{
+  margin: 0;
+  min-width: 0;
+}
+
+.structure-value code{
+  overflow-wrap: anywhere;
+}
+
+.structure-note{
+  margin-left: .5rem;
+  color: var(--report-note);
+  font-size: .85rem;
+}
+
+@media (max-width: 600px){
+  .structure-list{
+    grid-template-columns: minmax(0, 1fr);
+    gap: .1rem;
+  }
+
+  .structure-value{
+    margin-bottom: .5rem;
+  }
+}

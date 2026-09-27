@@ -164,6 +164,194 @@ function stripFragment(urlObj) {
 }
 
 /**
+ * Punycode（RFC 3492）のデコード。依存を増やさないためにここへ置く。
+ * new URL() はホスト名を常に punycode へ正規化するので、
+ * 日本語ドメインを入れても xn--wgv71a119e.jp の形で返ってくる。
+ * 元の文字に戻さないと、危険なホモグラフと正当な国際化ドメインを見分けられない。
+ */
+const PUNYCODE_BASE = 36;
+const PUNYCODE_TMIN = 1;
+const PUNYCODE_TMAX = 26;
+const PUNYCODE_SKEW = 38;
+const PUNYCODE_DAMP = 700;
+const PUNYCODE_INITIAL_BIAS = 72;
+const PUNYCODE_INITIAL_N = 128;
+
+function punycodeAdapt(delta, numPoints, firstTime) {
+  let d = firstTime ? Math.floor(delta / PUNYCODE_DAMP) : delta >> 1;
+  d += Math.floor(d / numPoints);
+  let k = 0;
+  while (d > ((PUNYCODE_BASE - PUNYCODE_TMIN) * PUNYCODE_TMAX) >> 1) {
+    d = Math.floor(d / (PUNYCODE_BASE - PUNYCODE_TMIN));
+    k += PUNYCODE_BASE;
+  }
+  return k + Math.floor(((PUNYCODE_BASE - PUNYCODE_TMIN + 1) * d) / (d + PUNYCODE_SKEW));
+}
+
+/** 1ラベルぶんをデコードする。解釈できなければ null を返す。 */
+function punycodeDecodeLabel(label) {
+  const input = label.toLowerCase();
+  if (!input.startsWith("xn--")) return null;
+
+  const encoded = input.slice(4);
+  const lastDelimiter = encoded.lastIndexOf("-");
+  const basic = lastDelimiter > 0 ? encoded.slice(0, lastDelimiter) : "";
+  const digits = lastDelimiter > 0 ? encoded.slice(lastDelimiter + 1) : encoded;
+
+  const output = [...basic];
+  let n = PUNYCODE_INITIAL_N;
+  let bias = PUNYCODE_INITIAL_BIAS;
+  let i = 0;
+  let index = 0;
+
+  while (index < digits.length) {
+    const oldi = i;
+    let w = 1;
+
+    for (let k = PUNYCODE_BASE; ; k += PUNYCODE_BASE) {
+      if (index >= digits.length) return null;
+      const code = digits.charCodeAt(index);
+      index += 1;
+
+      let digit;
+      if (code >= 0x30 && code <= 0x39) digit = code - 0x30 + 26;
+      else if (code >= 0x61 && code <= 0x7a) digit = code - 0x61;
+      else return null;
+
+      if (digit >= PUNYCODE_BASE) return null;
+      i += digit * w;
+
+      const t = k <= bias ? PUNYCODE_TMIN : (k >= bias + PUNYCODE_TMAX ? PUNYCODE_TMAX : k - bias);
+      if (digit < t) break;
+      w *= PUNYCODE_BASE - t;
+    }
+
+    bias = punycodeAdapt(i - oldi, output.length + 1, oldi === 0);
+    n += Math.floor(i / (output.length + 1));
+    i %= output.length + 1;
+    if (n > 0x10ffff) return null;
+    output.splice(i, 0, String.fromCodePoint(n));
+    i += 1;
+  }
+
+  return output.join("");
+}
+
+/** ホスト名全体を、読める文字へ戻す。戻せないラベルはそのまま残す。 */
+function decodeHostname(hostname) {
+  return hostname
+    .split(".")
+    .map((label) => punycodeDecodeLabel(label) || label)
+    .join(".");
+}
+
+/**
+ * ラテン文字に見せかけたホスト名を見つける。
+ *
+ * 「xn-- で始まるかどうか」では、日本語ドメインもドイツ語ドメインも引っかかる。
+ * 実際に危ないのは、ラテン文字とよく似た形を持つ文字体系（キリル・ギリシャ・
+ * チェロキー）が、ラテン文字のTLDの下で使われている場合である。
+ * аррӏе.com はキリル文字だけで "apple" に見える。
+ * いっぽう пример.рф は、TLDもキリルなので、なりすましではない。
+ */
+const CONFUSABLE_SCRIPTS = [
+  ["Cyrillic", /\p{Script=Cyrillic}/u],
+  ["Greek", /\p{Script=Greek}/u],
+  ["Cherokee", /\p{Script=Cherokee}/u]
+];
+
+function findLookalikeLabel(decodedHost) {
+  const labels = decodedHost.split(".");
+  const tld = labels[labels.length - 1] || "";
+  const tldIsAscii = /^[a-z0-9-]+$/i.test(tld);
+
+  for (const label of labels.slice(0, -1)) {
+    for (const [script, pattern] of CONFUSABLE_SCRIPTS) {
+      if (!pattern.test(label)) continue;
+      // ラテン文字と同居している（混ぜて似せる手口）
+      if (/\p{Script=Latin}/u.test(label)) return { label, script, reason: "mixed" };
+      // ラテン文字のTLDの下で、その文字体系だけを使っている
+      if (tldIsAscii) return { label, script, reason: "underAsciiTld" };
+    }
+  }
+  return null;
+}
+
+/**
+ * 入力が読める文字のホスト名だったなら、その形で返す。
+ * new URL() はホスト名を punycode へ正規化するので、
+ * 日本語.jp を入れると xn--wgv71a119e.jp が返ってきてしまう。
+ * 追跡用の値を落とすという役目を超えて見た目を変えないようにする。
+ */
+function restoreReadableHost(urlString, urlObj, originalInput) {
+  if (!/[^\u0000-\u007F]/.test(originalInput)) return urlString;
+
+  const decodedHost = decodeHostname(urlObj.hostname);
+  if (decodedHost === urlObj.hostname) return urlString;
+
+  const port = urlObj.port ? `:${urlObj.port}` : "";
+  return urlString.replace(`//${urlObj.host}`, `//${decodedHost}${port}`);
+}
+
+/**
+ * 共有する前に外したほうがよいパラメーター名。
+ * 消しはしない。消すとリンクが動かなくなることがあるためで、
+ * 「これが付いたまま共有してよいか」を判断するのは利用者である。
+ */
+const SENSITIVE_PARAM_NAMES = [
+  "email", "e-mail", "mail", "mailaddress", "phone", "tel", "telephone",
+  "token", "access_token", "refresh_token", "id_token", "auth", "authorization",
+  "apikey", "api_key", "secret", "password", "passwd", "pwd",
+  "session", "sessionid", "session_id", "sid", "signature", "sig", "otp"
+];
+
+/** 値そのものが、見られると困る形をしているか */
+const EMAIL_VALUE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const JWT_VALUE_RE = /^eyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\./;
+const LONG_RANDOM_RE = /^[A-Za-z0-9_-]{32,}$/;
+
+function classifySensitiveValue(value) {
+  if (EMAIL_VALUE_RE.test(value)) return "email";
+  if (JWT_VALUE_RE.test(value)) return "jwt";
+  if (LONG_RANDOM_RE.test(value)) return "longRandom";
+  return null;
+}
+
+/**
+ * リダイレクト先として連れているURLを取り出す。
+ * %2F などでエンコードされていることが多いので、1段だけ戻してから読む。
+ */
+function extractRedirectTarget(value) {
+  let candidate = value;
+  if (/^https?%3a/i.test(candidate)) {
+    try {
+      candidate = decodeURIComponent(candidate);
+    } catch (e) {
+      return null;
+    }
+  }
+  if (!/^(https?:\/\/|\/\/)/i.test(candidate)) return null;
+
+  try {
+    const target = new URL(candidate.startsWith("//") ? `https:${candidate}` : candidate);
+    if (!ALLOWED_PROTOCOLS.has(target.protocol)) return null;
+    return target;
+  } catch (e) {
+    return null;
+  }
+}
+
+/** 連れているURL自体に、目立つ問題がないかを1段だけ見る */
+function describeRedirectTarget(target) {
+  const decodedHost = decodeHostname(target.hostname);
+  const notes = [];
+  if (target.username || target.password) notes.push("userinfo");
+  if (findLookalikeLabel(decodedHost)) notes.push("lookalike");
+  if (target.protocol === "http:") notes.push("plainHttp");
+  return { host: decodedHost, notes };
+}
+
+/**
  * URLに残る「気をつける点」を挙げる。
  * 消す対象ではないが、貼る前に見ておきたいもの。
  */
@@ -175,8 +363,12 @@ function analyzeRisks(urlObj) {
     risks.push({ id: "userinfo", detail: urlObj.username });
   }
 
-  if (host.split(".").some((label) => label.startsWith("xn--"))) {
-    risks.push({ id: "punycode", detail: host });
+  // xn-- で始まるかどうかでは、日本語ドメインもドイツ語ドメインも引っかかる。
+  // 読める文字へ戻してから、ラテン文字に見せかけているものだけを挙げる。
+  const decodedHost = decodeHostname(host);
+  const lookalike = findLookalikeLabel(decodedHost);
+  if (lookalike) {
+    risks.push({ id: "lookalike", detail: decodedHost });
   }
 
   if (urlObj.port && urlObj.port !== "80" && urlObj.port !== "443") {
@@ -193,10 +385,29 @@ function analyzeRisks(urlObj) {
 
   for (const [name, value] of urlObj.searchParams) {
     const lower = name.toLowerCase();
-    const looksRedirect = REDIRECT_PARAM_NAMES.includes(lower);
-    const carriesUrl = /^(https?:\/\/|\/\/)/i.test(value) || /^https?%3a%2f%2f/i.test(value);
-    if (looksRedirect && carriesUrl) {
-      risks.push({ id: "openRedirect", detail: `${name}=${value.slice(0, 60)}` });
+
+    // 別のURLを連れている場合は、その行き先も1段だけ見る
+    if (REDIRECT_PARAM_NAMES.includes(lower)) {
+      const target = extractRedirectTarget(value);
+      if (target) {
+        const described = describeRedirectTarget(target);
+        risks.push({
+          id: "openRedirect",
+          detail: `${name} → ${described.host}`,
+          target: target.toString(),
+          targetNotes: described.notes
+        });
+      }
+    }
+
+    // 共有する前に外したほうがよい値
+    if (SENSITIVE_PARAM_NAMES.includes(lower)) {
+      risks.push({ id: "sensitiveName", detail: `${name}=` });
+      continue;
+    }
+    const kind = classifySensitiveValue(value);
+    if (kind) {
+      risks.push({ id: "sensitiveValue", detail: `${name}=`, kind });
     }
   }
 
@@ -222,7 +433,7 @@ function extractASIN(urlObj) {
 }
 
 /** クエリパラメータ削除（前方一致・完全一致・サイト別の3系統）。消したものを返す。 */
-function stripParams(urlObj, { strong=false, amazonMode=false } = {}) {
+function stripParams(urlObj, { strong=false, amazonMode=false, customParams=[] } = {}) {
   const removed = [];
   const toDelete = new Set();
 
@@ -238,6 +449,10 @@ function stripParams(urlObj, { strong=false, amazonMode=false } = {}) {
   if (amazonMode) {
     for (const k of AMAZON_EXACT_BLOCKS) toDelete.add(k.toLowerCase());
   }
+
+  // 自分で足した名前
+  const custom = new Set(customParams.map((k) => k.toLowerCase()));
+  for (const k of custom) toDelete.add(k);
 
   // サイト別ルール（そのサイトでだけ落とす名前）
   const rule = siteRuleFor(urlObj.hostname.toLowerCase());
@@ -260,7 +475,8 @@ function stripParams(urlObj, { strong=false, amazonMode=false } = {}) {
 
     if (blockedByPrefix || toDelete.has(lower)) {
       urlObj.searchParams.delete(key);
-      removed.push({ name: key, where: "query", noteKey: noteKeyFor(key), site: rule ? rule.id : null });
+      const noteKey = custom.has(lower) ? "note.custom" : noteKeyFor(key);
+      removed.push({ name: key, where: "query", noteKey, site: rule ? rule.id : null });
     }
   }
 
@@ -277,6 +493,82 @@ function normalizeAmazon(urlObj) {
 
   // 検索クエリは空に
   urlObj.search = "";
+}
+
+/**
+ * URLを部品に分けて見せる。
+ * 「貼る前に見ておきたい点」で指摘しているのがどの部分なのかを、
+ * 目で確かめられるようにする。1本だけ処理したときに出す。
+ */
+function buildStructureRows(urlObj) {
+  const rows = [];
+  const decodedHost = decodeHostname(urlObj.hostname);
+
+  rows.push({ key: "scheme", value: urlObj.protocol.replace(":", "") });
+
+  if (urlObj.username || urlObj.password) {
+    // ここがフィッシングで使われる。目立たせたいので分けて出す
+    rows.push({ key: "userinfo", value: urlObj.password ? `${urlObj.username}:***` : urlObj.username, warn: true });
+  }
+
+  rows.push({
+    key: "host",
+    value: decodedHost,
+    note: decodedHost === urlObj.hostname ? null : urlObj.hostname,
+    warn: Boolean(findLookalikeLabel(decodedHost))
+  });
+
+  if (urlObj.port) {
+    rows.push({ key: "port", value: urlObj.port, warn: urlObj.port !== "80" && urlObj.port !== "443" });
+  }
+
+  rows.push({ key: "path", value: urlObj.pathname || "/" });
+
+  for (const [name, value] of urlObj.searchParams) {
+    rows.push({ key: "query", name, value });
+  }
+
+  if (urlObj.hash) {
+    rows.push({ key: "fragment", value: urlObj.hash.replace(/^#/, "") });
+  }
+
+  return rows;
+}
+
+function updateStructureReport(results) {
+  const panel = ensurePanel("structureReport", "report-panel structure-panel", "riskReport");
+
+  // 1本だけのときに出す。複数行だと、どのURLの話かがわからなくなる
+  const usable = results.filter((r) => !r.error && r.cleaned);
+  if (usable.length !== 1) {
+    panel.hidden = true;
+    return;
+  }
+
+  let urlObj;
+  try {
+    urlObj = new URL(usable[0].cleaned);
+  } catch (e) {
+    panel.hidden = true;
+    return;
+  }
+
+  panel.hidden = false;
+  panel.append(el("h3", { class: "report-title", text: uiText("structure.title") }));
+
+  const list = el("dl", { class: "structure-list" });
+  for (const row of buildStructureRows(urlObj)) {
+    const label = row.key === "query"
+      ? uiText("structure.query", { name: row.name })
+      : uiText(`structure.${row.key}`);
+
+    list.append(el("dt", { class: `structure-key${row.warn ? " structure-warn" : ""}`, text: label }));
+    list.append(el("dd", { class: "structure-value" }, [
+      el("code", { text: String(row.value) }),
+      row.note ? el("span", { class: "structure-note", text: uiText("structure.encoded", { value: row.note }) }) : null
+    ]));
+  }
+  panel.append(list);
 }
 
 /** 画面の文言は i18n.js の辞書から引く。ここには文言を置かない。 */
@@ -380,10 +672,21 @@ function updateRiskReport(risks) {
 
   const list = el("ul", { class: "report-list" });
   for (const risk of rows) {
+    // 連れているURL自体にも問題があれば、その場で添える
+    const targetNote = (risk.targetNotes && risk.targetNotes.length)
+      ? el("span", {
+          class: "risk-target-note",
+          text: uiText("risk.targetAlso", {
+            notes: risk.targetNotes.map((n) => uiText(`risk.${n}.label`)).join("、")
+          })
+        })
+      : null;
+
     list.append(el("li", { class: "report-item risk-item" }, [
       el("strong", { class: "risk-label", text: uiText(`risk.${risk.id}.label`) }),
       el("span", { class: "risk-body", text: uiText(`risk.${risk.id}.body`) }),
-      risk.detail ? el("code", { class: "risk-detail", text: String(risk.detail) }) : null
+      risk.detail ? el("code", { class: "risk-detail", text: String(risk.detail) }) : null,
+      targetNote
     ]));
   }
   panel.append(list);
@@ -458,7 +761,11 @@ function cleanOne(raw, opts) {
   const isAmazon = AMAZON_HOST_RE.test(host);
 
   // クエリ除去。消したものを控えて、あとで内訳を出す
-  const removed = stripParams(urlObj, { strong: opts.strongBlocklist, amazonMode: opts.amazonMode });
+  const removed = stripParams(urlObj, {
+    strong: opts.strongBlocklist,
+    amazonMode: opts.amazonMode,
+    customParams: opts.customParams || []
+  });
 
   // フラグメントに紛れた追跡用の値も落とす
   removed.push(...stripFragment(urlObj));
@@ -479,7 +786,7 @@ function cleanOne(raw, opts) {
   // 気をつける点は、消したあとの姿で判定する
   const risks = analyzeRisks(urlObj);
 
-  const cleanedUrl = urlObj.toString();
+  const cleanedUrl = restoreReadableHost(urlObj.toString(), urlObj, input);
   const newParamCount = [...urlObj.searchParams].length;
   const paramsRemoved = originalParamCount - newParamCount;
   const changed = originalUrl !== cleanedUrl || amazonNormalized;
@@ -584,6 +891,38 @@ function setupUI() {
   const $amazonMode = document.getElementById("amazonMode");
   const $strong = document.getElementById("strictBlocklist");
 
+  // 自分で足した名前。設定はこの端末にだけ保存する。
+  const $custom = document.getElementById("customParams");
+
+  const readCustom = () => {
+    try {
+      return localStorage.getItem("urlpurifier:customParams") || "";
+    } catch (e) {
+      return "";
+    }
+  };
+  const writeCustom = (value) => {
+    try {
+      localStorage.setItem("urlpurifier:customParams", value);
+    } catch (e) {
+      // 保存できなくても、その場の指定は効く
+    }
+  };
+
+  if ($custom) {
+    $custom.value = readCustom();
+    $custom.addEventListener("change", () => writeCustom($custom.value));
+  }
+
+  /** 入力欄の文字列を、名前の配列にする */
+  const customParamList = () => {
+    if (!$custom) return [];
+    return $custom.value
+      .split(/[,\s]+/)
+      .map((name) => name.trim())
+      .filter(Boolean);
+  };
+
   $btnClean.addEventListener("click", async () => {
     const inputText = $in.value || "";
     const lines = inputText.split(/\r?\n/).filter(line => line.trim());
@@ -592,6 +931,7 @@ function setupUI() {
     const options = {
       amazonMode: $amazonMode.checked,
       strongBlocklist: $strong.checked,
+      customParams: customParamList(),
     };
 
     // 大量処理の場合はローディング表示
@@ -617,6 +957,7 @@ function setupUI() {
       // 消したものと、貼る前に見ておきたい点を出す
       updateRemovedReport(batchResult.removed);
       updateRiskReport(batchResult.risks);
+      updateStructureReport(batchResult.results);
       
       // エラーがあれば表示
       const errors = batchResult.results.filter(r => r.error);
@@ -689,6 +1030,7 @@ function setupUI() {
     // 前回の内訳と注意書きも消す。残っていると別のURLの話と取り違える
     updateRemovedReport([]);
     updateRiskReport([]);
+    updateStructureReport([]);
     updateStats({ totalUrls: 0, totalChanged: 0, totalParamsRemoved: 0, totalErrors: 0 });
   });
 

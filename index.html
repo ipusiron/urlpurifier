@@ -56,6 +56,11 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
           <input type="checkbox" id="strictBlocklist" />
           <span data-i18n="form.strictMode">詳細除去モード</span>
         </label>
+        <div class="custom-rules">
+          <label for="customParams" class="label" data-i18n="form.customLabel">自分で消したい名前（カンマ区切り）</label>
+          <input type="text" id="customParams" class="input" data-i18n-attr="placeholder: form.customPlaceholder" placeholder="例: ref, from, cid">
+          <p class="custom-rules-note" data-i18n="form.customNote">この設定は、この端末にだけ保存します。</p>
+        </div>
       </div>
 
       <div class="buttons">

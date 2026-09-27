@@ -74,6 +74,24 @@ Things that are not removed, but are worth knowing about.
 | A parameter to strip before sharing | Names such as `email=`, `token=` and `session=` |
 | The value itself looks private | An email address, a JWT or a long random string |
 
+### Shows the parts of a URL
+
+When a single URL is processed, its parts are laid out. An embedded user name, a look-alike host and an unusual port are highlighted here too, so you can see which part of the URL a notice is about.
+
+```
+The parts of this URL
+  Scheme                          https
+  User name (this is not the site) www.google.com
+  Host (where you actually connect) 日本語.jp  encoded form: xn--wgv71a119e.jp
+  Port                            8443
+  Path                            /a/b
+  Query q                         cat
+```
+
+### Lets you add your own names
+
+Add the site-specific names you keep running into. The setting is kept on this device only; the URLs you type are not stored.
+
 ## 🌐 Japanese and English
 
 Use the button at the top right. The language is decided in this order:
@@ -84,7 +102,7 @@ Use the button at the top right. The language is decided in this order:
 
 Switching reloads the page, but **the URLs you typed and the result are kept**. They travel in `window.name`, so no storage is used.
 
-Note that **only your display settings (theme and language) are kept on this device.** The URLs you type are not stored. In a browser that refuses storage, the settings simply do not come back; every feature still works.
+Note that **only your settings (theme, language and your own list of names) are kept on this device.** The URLs you type are not stored. In a browser that refuses storage, the settings simply do not come back; every feature still works.
 
 ## 🔐 How this tool protects itself
 
@@ -115,7 +133,7 @@ There are no dependencies. Node.js 22 or later is required.
 npm test
 ```
 
-49 tests check that:
+57 tests check that:
 
 - Schemes such as `javascript:` are never emitted, and invented URLs are never produced
 - Per-site rules apply only on those sites
@@ -146,6 +164,7 @@ urlpurifier/
 │   ├── i18n.test.js          # The dictionaries and the absence of hard-coded text
 │   ├── idn.test.js           # Punycode decoding and look-alike host detection
 │   ├── sensitive.test.js     # Values to strip before sharing, and redirect destinations
+│   ├── custom-structure.test.js # Custom names, and the parts table
 │   └── docs.test.js          # Consistency of the README files
 ├── .github/workflows/test.yml # Runs the tests on push and pull request
 ├── package.json              # Just calls node --test; no dependencies

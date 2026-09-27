@@ -39,6 +39,7 @@ function loadScript(language = "ja") {
        stripParams, normalizeAmazon, extractASIN, describeError, formatOutputLine,
        noteKeyFor, siteRuleFor, stripFragment, analyzeRisks, uiText,
        decodeHostname, findLookalikeLabel, punycodeDecodeLabel, restoreReadableHost,
+       buildStructureRows, extractRedirectTarget, classifySensitiveValue,
        COMMON_PREFIX_BLOCKS, COMMON_EXACT_BLOCKS, STRONG_EXACT_BLOCKS, AMAZON_EXACT_BLOCKS,
        SITE_PARAM_RULES, PARAM_NOTES, PARAM_NOTE_PREFIXES, SHORTENER_HOSTS
      };`

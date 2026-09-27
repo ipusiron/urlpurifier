@@ -433,7 +433,7 @@ function extractASIN(urlObj) {
 }
 
 /** クエリパラメータ削除（前方一致・完全一致・サイト別の3系統）。消したものを返す。 */
-function stripParams(urlObj, { strong=false, amazonMode=false } = {}) {
+function stripParams(urlObj, { strong=false, amazonMode=false, customParams=[] } = {}) {
   const removed = [];
   const toDelete = new Set();
 
@@ -449,6 +449,10 @@ function stripParams(urlObj, { strong=false, amazonMode=false } = {}) {
   if (amazonMode) {
     for (const k of AMAZON_EXACT_BLOCKS) toDelete.add(k.toLowerCase());
   }
+
+  // 自分で足した名前
+  const custom = new Set(customParams.map((k) => k.toLowerCase()));
+  for (const k of custom) toDelete.add(k);
 
   // サイト別ルール（そのサイトでだけ落とす名前）
   const rule = siteRuleFor(urlObj.hostname.toLowerCase());
@@ -471,7 +475,8 @@ function stripParams(urlObj, { strong=false, amazonMode=false } = {}) {
 
     if (blockedByPrefix || toDelete.has(lower)) {
       urlObj.searchParams.delete(key);
-      removed.push({ name: key, where: "query", noteKey: noteKeyFor(key), site: rule ? rule.id : null });
+      const noteKey = custom.has(lower) ? "note.custom" : noteKeyFor(key);
+      removed.push({ name: key, where: "query", noteKey, site: rule ? rule.id : null });
     }
   }
 
@@ -488,6 +493,82 @@ function normalizeAmazon(urlObj) {
 
   // 検索クエリは空に
   urlObj.search = "";
+}
+
+/**
+ * URLを部品に分けて見せる。
+ * 「貼る前に見ておきたい点」で指摘しているのがどの部分なのかを、
+ * 目で確かめられるようにする。1本だけ処理したときに出す。
+ */
+function buildStructureRows(urlObj) {
+  const rows = [];
+  const decodedHost = decodeHostname(urlObj.hostname);
+
+  rows.push({ key: "scheme", value: urlObj.protocol.replace(":", "") });
+
+  if (urlObj.username || urlObj.password) {
+    // ここがフィッシングで使われる。目立たせたいので分けて出す
+    rows.push({ key: "userinfo", value: urlObj.password ? `${urlObj.username}:***` : urlObj.username, warn: true });
+  }
+
+  rows.push({
+    key: "host",
+    value: decodedHost,
+    note: decodedHost === urlObj.hostname ? null : urlObj.hostname,
+    warn: Boolean(findLookalikeLabel(decodedHost))
+  });
+
+  if (urlObj.port) {
+    rows.push({ key: "port", value: urlObj.port, warn: urlObj.port !== "80" && urlObj.port !== "443" });
+  }
+
+  rows.push({ key: "path", value: urlObj.pathname || "/" });
+
+  for (const [name, value] of urlObj.searchParams) {
+    rows.push({ key: "query", name, value });
+  }
+
+  if (urlObj.hash) {
+    rows.push({ key: "fragment", value: urlObj.hash.replace(/^#/, "") });
+  }
+
+  return rows;
+}
+
+function updateStructureReport(results) {
+  const panel = ensurePanel("structureReport", "report-panel structure-panel", "riskReport");
+
+  // 1本だけのときに出す。複数行だと、どのURLの話かがわからなくなる
+  const usable = results.filter((r) => !r.error && r.cleaned);
+  if (usable.length !== 1) {
+    panel.hidden = true;
+    return;
+  }
+
+  let urlObj;
+  try {
+    urlObj = new URL(usable[0].cleaned);
+  } catch (e) {
+    panel.hidden = true;
+    return;
+  }
+
+  panel.hidden = false;
+  panel.append(el("h3", { class: "report-title", text: uiText("structure.title") }));
+
+  const list = el("dl", { class: "structure-list" });
+  for (const row of buildStructureRows(urlObj)) {
+    const label = row.key === "query"
+      ? uiText("structure.query", { name: row.name })
+      : uiText(`structure.${row.key}`);
+
+    list.append(el("dt", { class: `structure-key${row.warn ? " structure-warn" : ""}`, text: label }));
+    list.append(el("dd", { class: "structure-value" }, [
+      el("code", { text: String(row.value) }),
+      row.note ? el("span", { class: "structure-note", text: uiText("structure.encoded", { value: row.note }) }) : null
+    ]));
+  }
+  panel.append(list);
 }
 
 /** 画面の文言は i18n.js の辞書から引く。ここには文言を置かない。 */
@@ -680,7 +761,11 @@ function cleanOne(raw, opts) {
   const isAmazon = AMAZON_HOST_RE.test(host);
 
   // クエリ除去。消したものを控えて、あとで内訳を出す
-  const removed = stripParams(urlObj, { strong: opts.strongBlocklist, amazonMode: opts.amazonMode });
+  const removed = stripParams(urlObj, {
+    strong: opts.strongBlocklist,
+    amazonMode: opts.amazonMode,
+    customParams: opts.customParams || []
+  });
 
   // フラグメントに紛れた追跡用の値も落とす
   removed.push(...stripFragment(urlObj));
@@ -806,6 +891,38 @@ function setupUI() {
   const $amazonMode = document.getElementById("amazonMode");
   const $strong = document.getElementById("strictBlocklist");
 
+  // 自分で足した名前。設定はこの端末にだけ保存する。
+  const $custom = document.getElementById("customParams");
+
+  const readCustom = () => {
+    try {
+      return localStorage.getItem("urlpurifier:customParams") || "";
+    } catch (e) {
+      return "";
+    }
+  };
+  const writeCustom = (value) => {
+    try {
+      localStorage.setItem("urlpurifier:customParams", value);
+    } catch (e) {
+      // 保存できなくても、その場の指定は効く
+    }
+  };
+
+  if ($custom) {
+    $custom.value = readCustom();
+    $custom.addEventListener("change", () => writeCustom($custom.value));
+  }
+
+  /** 入力欄の文字列を、名前の配列にする */
+  const customParamList = () => {
+    if (!$custom) return [];
+    return $custom.value
+      .split(/[,\s]+/)
+      .map((name) => name.trim())
+      .filter(Boolean);
+  };
+
   $btnClean.addEventListener("click", async () => {
     const inputText = $in.value || "";
     const lines = inputText.split(/\r?\n/).filter(line => line.trim());
@@ -814,6 +931,7 @@ function setupUI() {
     const options = {
       amazonMode: $amazonMode.checked,
       strongBlocklist: $strong.checked,
+      customParams: customParamList(),
     };
 
     // 大量処理の場合はローディング表示
@@ -839,6 +957,7 @@ function setupUI() {
       // 消したものと、貼る前に見ておきたい点を出す
       updateRemovedReport(batchResult.removed);
       updateRiskReport(batchResult.risks);
+      updateStructureReport(batchResult.results);
       
       // エラーがあれば表示
       const errors = batchResult.results.filter(r => r.error);
@@ -911,6 +1030,7 @@ function setupUI() {
     // 前回の内訳と注意書きも消す。残っていると別のURLの話と取り違える
     updateRemovedReport([]);
     updateRiskReport([]);
+    updateStructureReport([]);
     updateStats({ totalUrls: 0, totalChanged: 0, totalParamsRemoved: 0, totalErrors: 0 });
   });
 

@@ -1,0 +1,7 @@
+{
+  "name": "urlpurifier",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

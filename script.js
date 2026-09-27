@@ -97,41 +97,71 @@ function normalizeAmazon(urlObj) {
   urlObj.search = "";
 }
 
+/** 浄化してよいスキーム。ここにないものは出力しない。 */
+const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
+
+/**
+ * スキームが省略された入力が、ホスト名として読めるかを判定する。
+ * 末尾までアンカーし、ドットで区切られた最後のラベル（TLD相当）を2文字以上要求する。
+ * 以前は末尾アンカーがなく全グループが省略可だったため、
+ * "hello world" のような文字列まで通り、https://hello%20world/ という
+ * 実在しないURLを作って返していた（実測で確認）。
+ */
+function looksLikeHost(input) {
+  return /^[^\s/?#@:]+\.[^\s/?#@:.]{2,}(:\d{1,5})?([/?#]\S*)?$/.test(input);
+}
+
+/**
+ * 入力をURLとして解釈する。
+ * 戻り値は { urlObj } か { errorCode, detail }。
+ * errorCode は表示のための識別子で、文言は uiText() が決める。
+ */
+function parseInputUrl(input) {
+  const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(input);
+
+  let candidate = input;
+  if (!hasScheme) {
+    if (!looksLikeHost(input)) return { errorCode: "notUrl" };
+    candidate = `https://${input}`;
+  }
+
+  let urlObj;
+  try {
+    urlObj = new URL(candidate);
+  } catch (err) {
+    return { errorCode: "invalid" };
+  }
+
+  // javascript: や data: は、貼り付けた先で実行される危険がある。
+  // このツールの出力はコピーして使う前提なので、通さない。
+  if (!ALLOWED_PROTOCOLS.has(urlObj.protocol)) {
+    return { errorCode: "scheme", detail: urlObj.protocol.replace(":", "") };
+  }
+
+  if (!urlObj.hostname) return { errorCode: "invalid" };
+
+  return { urlObj };
+}
+
 /** 1本のURLをクリーン化 */
 function cleanOne(raw, opts) {
   const input = raw.trim();
   if (!input) return { cleaned: "", original: "", error: null, changed: false };
 
-  // URL的な形式かどうかを判定（ドメイン形式または既にスキーマがある）
-  const looksLikeUrl = /^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(input) || // スキーマあり
-                       /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*/.test(input); // ドメイン形式
-  
-  if (!looksLikeUrl) {
-    // URLらしくない文字列はそのまま返す
-    return { cleaned: input, original: input, error: null, changed: false };
-  }
-
-  let urlObj;
-  try {
-    // スキーマ欠落に対応（例: example.com）
-    if (!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(input)) {
-      // ドメイン形式の場合のみ https:// を補う
-      urlObj = new URL(`https://${input}`);
-    } else {
-      urlObj = new URL(input);
-    }
-  } catch (err) {
-    // URLとして解釈できなければ、エラー情報付きで返す
-    return { 
-      cleaned: input, 
-      original: input, 
-      error: "無効なURL形式です", 
-      changed: false 
+  const parsed = parseInputUrl(input);
+  if (parsed.errorCode) {
+    return {
+      cleaned: "",
+      original: input,
+      error: parsed.errorCode,
+      errorDetail: parsed.detail || null,
+      changed: false
     };
   }
 
+  const urlObj = parsed.urlObj;
   const originalUrl = urlObj.toString();
-  const originalParamCount = urlObj.searchParams.size;
+  const originalParamCount = [...urlObj.searchParams].length;
   const host = urlObj.hostname.toLowerCase();
   const isAmazon = AMAZON_HOST_RE.test(host);
 
@@ -152,20 +182,45 @@ function cleanOne(raw, opts) {
   }
 
   const cleanedUrl = urlObj.toString();
-  const newParamCount = urlObj.searchParams.size;
+  const newParamCount = [...urlObj.searchParams].length;
   const paramsRemoved = originalParamCount - newParamCount;
   const changed = originalUrl !== cleanedUrl || amazonNormalized;
 
-  return { 
-    cleaned: cleanedUrl, 
-    original: originalUrl, 
-    error: null, 
+  return {
+    cleaned: cleanedUrl,
+    original: originalUrl,
+    error: null,
+    errorDetail: null,
     changed: changed,
     stats: {
       paramsRemoved: paramsRemoved,
       amazonNormalized: amazonNormalized
     }
   };
+}
+
+/**
+ * エラーコードを画面の文言にする。
+ * 文言をここへ集めておき、日英の切り替えはこの関数の中だけで済むようにする。
+ */
+function describeError(result) {
+  switch (result.error) {
+    case "scheme":
+      return `${result.errorDetail}: は対象外です（http/httpsのみ浄化します）`;
+    case "notUrl":
+      return "URLとして読めません";
+    case "invalid":
+      return "URLの形式が正しくありません";
+    default:
+      return "処理できません";
+  }
+}
+
+/** 出力欄の1行を組み立てる。対象外の行は # で始め、URLと取り違えないようにする。 */
+function formatOutputLine(result) {
+  if (!result.error) return result.cleaned;
+  const original = result.original.length > 60 ? `${result.original.slice(0, 60)}...` : result.original;
+  return `# ${describeError(result)} — ${original}`;
 }
 
 /** 複数行クリーン化 */
@@ -232,7 +287,7 @@ function setupUI() {
       const batchResult = cleanBatch(inputText, options);
       
       // 結果テキストエリアに表示
-      const outputText = batchResult.results.map(result => result.cleaned).join("\n");
+      const outputText = batchResult.results.map(formatOutputLine).join("\n");
       $out.value = outputText;
       
       // 統計表示を更新
@@ -241,7 +296,7 @@ function setupUI() {
       // エラーがあれば表示
       const errors = batchResult.results.filter(r => r.error);
       if (errors.length > 0) {
-        const errorMsg = `${errors.length}件のエラーがありました: ${errors[0].error}${errors.length > 1 ? ' など' : ''}`;
+        const errorMsg = `${errors.length}件が対象外でした: ${describeError(errors[0])}${errors.length > 1 ? ' など' : ''}`;
         showToast(errorMsg, "error");
       } else if (batchResult.stats.totalChanged > 0) {
         showToast(`${batchResult.stats.totalChanged}個のURLを浄化しました`);

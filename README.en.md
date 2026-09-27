@@ -133,7 +133,7 @@ There are no dependencies. Node.js 22 or later is required.
 npm test
 ```
 
-57 tests check that:
+58 tests check that:
 
 - Schemes such as `javascript:` are never emitted, and invented URLs are never produced
 - Per-site rules apply only on those sites

@@ -279,61 +279,9 @@ function normalizeAmazon(urlObj) {
   urlObj.search = "";
 }
 
-/**
- * 画面の文言。段階4で日英の辞書へ移すため、参照はこの関数に集約する。
- */
-const UI_TEXT_JA = {
-  "report.removedTitle": "消したもの（{count}件）",
-  "report.riskTitle": "貼る前に見ておきたい点（{count}件）",
-  "report.inFragment": "＃以降",
-  "report.times": "{count}回",
-
-  "note.utm": "流入元の記録。どの広告・投稿から来たかを送り先に伝える",
-  "note.fbclid": "Facebookのクリック識別子。個人単位で追跡できる",
-  "note.gclid": "Google広告のクリック識別子。広告の成果測定に使われる",
-  "note.msclkid": "Microsoft広告のクリック識別子",
-  "note.yclid": "Yandexのクリック識別子",
-  "note.igshid": "Instagramの共有識別子。誰の共有から来たかがわかる",
-  "note.mailchimp": "Mailchimpの配信・購読者の識別子。メールの受信者を特定できる",
-  "note.hubspot": "HubSpotの追跡情報。メールや行動の履歴と結び付く",
-  "note.ttclid": "TikTokのクリック識別子",
-  "note.twclid": "Xのクリック識別子",
-  "note.linkedin": "LinkedInの広告識別子",
-  "note.matomo": "Matomo（解析ツール）の流入元の記録",
-  "note.vero": "メール配信サービスの受信者の識別子",
-  "note.spm": "サイト内のどこを押したかの記録（主にアリババ系）",
-  "note.scid": "配信サービスの識別子",
-  "note.si": "共有時に付く識別子。誰の共有から来たかがわかる",
-  "note.shareToken": "共有元をたどるための一時的な値",
-  "note.affiliate": "アフィリエイトの識別子。報酬の紐づけに使われる",
-  "note.mibextid": "Facebookの内部的な経路の記録",
-  "note.appOrigin": "どのアプリから開いたかの記録",
-  "note.shareOrigin": "どの経路で共有されたかの記録",
-  "note.deviceId": "端末やブラウザーを見分けるための値",
-  "note.textFragment": "ページ内のどこを読んでいたかが残る指定",
-  "note.generic": "追跡に使われることがある値",
-
-  "risk.userinfo.label": "URLに利用者名が埋め込まれている",
-  "risk.userinfo.body": "@ の前は「どのサイトか」ではありません。本物らしい名前を置いて、別のサイトへ誘う手口に使われます。@ の直後のホスト名を見てください。",
-  "risk.punycode.label": "別の文字が混ざったホスト名",
-  "risk.punycode.body": "見た目が似た文字を使って、本物のドメインに見せかけることがあります。xn-- で始まる部分は、そのまま読める文字ではありません。",
-  "risk.port.label": "ふつうと違うポート番号",
-  "risk.port.body": "80と443以外が指定されています。おかしいとは限りませんが、公式の案内にあるかを確かめてください。",
-  "risk.plainHttp.label": "暗号化されていない通信",
-  "risk.plainHttp.body": "http:// は途中で読まれたり書き換えられたりします。https:// の版があるかを確かめてください。",
-  "risk.shortener.label": "短縮URL",
-  "risk.shortener.body": "行き先が見えません。このツールは展開しないので、開いたあとのURLに追跡用の値が残ることがあります。",
-  "risk.openRedirect.label": "別のURLを連れている",
-  "risk.openRedirect.body": "パラメーターの中に別のURLが入っています。踏み台にして知らないサイトへ送る手口に使われます。行き先を確かめてください。"
-};
-
-/** 文言を引く。{name} の差し込みに対応する。 */
+/** 画面の文言は i18n.js の辞書から引く。ここには文言を置かない。 */
 function uiText(key, params = {}) {
-  let text = Object.prototype.hasOwnProperty.call(UI_TEXT_JA, key) ? UI_TEXT_JA[key] : key;
-  for (const [name, value] of Object.entries(params)) {
-    text = text.split(`{${name}}`).join(String(value));
-  }
-  return text;
+  return window.i18n.t(key, params);
 }
 
 /** 要素を組み立てる小さなヘルパー。HTML文字列を組み立てないので、値に何が入っても壊れない。 */
@@ -553,13 +501,13 @@ function cleanOne(raw, opts) {
 function describeError(result) {
   switch (result.error) {
     case "scheme":
-      return `${result.errorDetail}: は対象外です（http/httpsのみ浄化します）`;
+      return uiText("error.scheme", { scheme: result.errorDetail });
     case "notUrl":
-      return "URLとして読めません";
+      return uiText("error.notUrl");
     case "invalid":
-      return "URLの形式が正しくありません";
+      return uiText("error.invalid");
     default:
-      return "処理できません";
+      return uiText("error.unknown");
   }
 }
 
@@ -612,6 +560,17 @@ function cleanBatch(multiline, opts) {
 
 /** UI ハンドラ */
 function setupUI() {
+  // 先に静的な文言を差し替えてから、各機能を組み立てる
+  window.i18n.apply();
+  window.i18n.restoreCarriedState();
+
+  const $btnLang = document.getElementById("btnLang");
+  if ($btnLang) {
+    $btnLang.addEventListener("click", () => {
+      window.i18n.setLanguage(window.i18n.language === "ja" ? "en" : "ja");
+    });
+  }
+
   const $in = document.getElementById("inputUrls");
   const $out = document.getElementById("outputUrls");
   const $btnClean = document.getElementById("btnClean");
@@ -632,9 +591,9 @@ function setupUI() {
 
     // 大量処理の場合はローディング表示
     if (isLargeJob) {
-      showLoading(`${lines.length}個のURLを処理中...`);
+      showLoading(uiText("toast.processing", { count: lines.length }));
       $btnClean.disabled = true;
-      $btnClean.textContent = "処理中...";
+      $btnClean.textContent = uiText("toast.processingShort");
       
       // UIブロックを避けるため少し待機
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -657,21 +616,21 @@ function setupUI() {
       // エラーがあれば表示
       const errors = batchResult.results.filter(r => r.error);
       if (errors.length > 0) {
-        const errorMsg = `${errors.length}件が対象外でした: ${describeError(errors[0])}${errors.length > 1 ? ' など' : ''}`;
+        const errorMsg = uiText("toast.errors", { count: errors.length, reason: describeError(errors[0]), more: errors.length > 1 ? uiText("toast.errorsMore") : "" });
         showToast(errorMsg, "error");
       } else if (batchResult.stats.totalChanged > 0) {
-        showToast(`${batchResult.stats.totalChanged}個のURLを浄化しました`);
+        showToast(uiText("toast.cleaned", { count: batchResult.stats.totalChanged }));
       } else {
-        showToast("変更の必要なURLはありませんでした", "info");
+        showToast(uiText("toast.noChange"), "info");
       }
     } catch (error) {
-      showToast("処理中にエラーが発生しました", "error");
+      showToast(uiText("toast.failed"), "error");
       console.error("Clean error:", error);
     } finally {
       // ローディング終了
       hideLoading();
       $btnClean.disabled = false;
-      $btnClean.textContent = "クリーン化";
+      $btnClean.textContent = uiText("form.clean");
     }
   });
 
@@ -680,9 +639,9 @@ function setupUI() {
     const originalText = $btnCopy.textContent;
     try {
       await navigator.clipboard.writeText($out.value);
-      $btnCopy.textContent = "コピーしました";
+      $btnCopy.textContent = uiText("form.copied");
       $btnCopy.classList.add("copied");
-      showToast("クリップボードにコピーしました");
+      showToast(uiText("toast.copied"));
       setTimeout(() => {
         $btnCopy.classList.remove("copied");
         $btnCopy.textContent = originalText;
@@ -691,9 +650,9 @@ function setupUI() {
       // フォールバック
       $out.select();
       document.execCommand("copy");
-      $btnCopy.textContent = "コピーしました";
+      $btnCopy.textContent = uiText("form.copied");
       $btnCopy.classList.add("copied");
-      showToast("クリップボードにコピーしました");
+      showToast(uiText("toast.copied"));
       setTimeout(() => {
         $btnCopy.classList.remove("copied");
         $btnCopy.textContent = originalText;
@@ -839,27 +798,23 @@ function updateStats(stats) {
   }
   
   statsEl.hidden = false;
-  statsEl.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-item">
-        <span class="stat-value">${stats.totalUrls}</span>
-        <span class="stat-label">処理URL数</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">${stats.totalChanged}</span>
-        <span class="stat-label">変更URL数</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">${stats.totalParamsRemoved}</span>
-        <span class="stat-label">削除パラメータ数</span>
-      </div>
-      ${stats.totalErrors > 0 ? `
-      <div class="stat-item error">
-        <span class="stat-value">${stats.totalErrors}</span>
-        <span class="stat-label">エラー数</span>
-      </div>` : ''}
-    </div>
-  `;
+  statsEl.replaceChildren();
+
+  const grid = el("div", { class: "stats-grid" });
+  const cards = [
+    ["stats.total", stats.totalUrls, ""],
+    ["stats.changed", stats.totalChanged, ""],
+    ["stats.removed", stats.totalParamsRemoved, ""]
+  ];
+  if (stats.totalErrors > 0) cards.push(["stats.errors", stats.totalErrors, " error"]);
+
+  for (const [key, value, extra] of cards) {
+    grid.append(el("div", { class: `stat-item${extra}` }, [
+      el("span", { class: "stat-value", text: String(value) }),
+      el("span", { class: "stat-label", text: uiText(key) })
+    ]));
+  }
+  statsEl.append(grid);
 }
 
 /** URLプレビュー表示更新 */
@@ -888,18 +843,21 @@ function updateUrlPreview(text) {
   }
 
   previewEl.hidden = false;
-  previewEl.innerHTML = `
-    <div class="preview-header">
-      <span class="preview-title">📝 プレビュー（${longUrls.length}個の長いURL）</span>
-    </div>
-    <div class="preview-list">
-      ${longUrls.slice(0, 3).map(url => {
-        const truncated = truncateUrl(url, 60);
-        return `<div class="preview-item">${escapeHtml(truncated)}</div>`;
-      }).join('')}
-      ${longUrls.length > 3 ? `<div class="preview-more">他${longUrls.length - 3}個...</div>` : ''}
-    </div>
-  `;
+  previewEl.replaceChildren();
+
+  const header = el("div", { class: "preview-header" }, [
+    el("span", { class: "preview-title", text: `📝 ${uiText("preview.title", { count: longUrls.length })}` })
+  ]);
+
+  const list = el("div", { class: "preview-list" });
+  for (const url of longUrls.slice(0, 3)) {
+    list.append(el("div", { class: "preview-item", text: truncateUrl(url, 60) }));
+  }
+  if (longUrls.length > 3) {
+    list.append(el("div", { class: "preview-more", text: uiText("preview.more", { count: longUrls.length - 3 }) }));
+  }
+
+  previewEl.append(header, list);
 }
 
 /** URLプレビュー非表示 */

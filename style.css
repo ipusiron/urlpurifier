@@ -839,3 +839,37 @@ input[type="checkbox"]{
 .subtitle{
   color: var(--subtitle);
 }
+
+/* 言語切り替え */
+.btn-lang{
+  position: fixed;
+  top: 32px;
+  right: calc(50% - 460px + 72px);
+  min-height: 44px;
+  padding: .4rem .9rem;
+  border-radius: 999px;
+  background: var(--ghost);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: .9rem;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.btn-lang:hover,
+.btn-lang:focus-visible{
+  border-color: var(--accent);
+}
+
+@media (max-width: 1000px){
+  .btn-lang{
+    position: static;
+    display: block;
+    margin: .5rem auto 0;
+  }
+}
+
+/* フッターも青い地の上に載るので、説明文と同じ色にする */
+.footer{
+  color: var(--subtitle);
+}

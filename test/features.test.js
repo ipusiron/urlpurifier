@@ -96,17 +96,27 @@ test("まとめて処理したときも、内訳と注意書きが集まる", ()
   assert.ok(ids.includes("plainHttp"));
 });
 
-test("説明の差し込みが空にならない", () => {
-  // 内訳に出るキーは、すべて文言を持っている
-  const source = require("./helper").read("script.js");
-  const keys = [...source.matchAll(/"(note\.[a-zA-Z]+)"/g)].map((m) => m[1]);
-  const defined = new Set([...source.matchAll(/"(note\.[a-zA-Z]+)":/g)].map((m) => m[1]));
-  for (const key of new Set(keys)) {
-    assert.ok(defined.has(key), `文言がない: ${key}`);
+test("内訳と注意書きに使うキーが、辞書にそろっている", () => {
+  const { read, loadMessages } = require("./helper");
+  const source = read("script.js");
+  const { MESSAGES } = loadMessages();
+
+  // script.js が参照する note.* が、日英の辞書にある
+  const noteKeys = new Set([...source.matchAll(/"(note\.[a-zA-Z]+)"/g)].map((m) => m[1]));
+  assert.ok(noteKeys.size > 15);
+  for (const key of noteKeys) {
+    for (const lang of ["ja", "en"]) {
+      assert.ok(MESSAGES[lang][key], `${lang} に ${key} がない`);
+    }
   }
-  const riskIds = [...source.matchAll(/id: "([a-zA-Z]+)", detail/g)].map((m) => m[1]);
-  for (const id of new Set(riskIds)) {
-    assert.ok(source.includes(`"risk.${id}.label"`), `文言がない: risk.${id}.label`);
-    assert.ok(source.includes(`"risk.${id}.body"`), `文言がない: risk.${id}.body`);
+
+  // 危険サインの id ごとに label と body がある
+  const riskIds = new Set([...source.matchAll(/id: "([a-zA-Z]+)", detail/g)].map((m) => m[1]));
+  assert.ok(riskIds.size >= 5);
+  for (const id of riskIds) {
+    for (const lang of ["ja", "en"]) {
+      assert.ok(MESSAGES[lang][`risk.${id}.label`], `${lang} に risk.${id}.label がない`);
+      assert.ok(MESSAGES[lang][`risk.${id}.body`], `${lang} に risk.${id}.body がない`);
+    }
   }
 });

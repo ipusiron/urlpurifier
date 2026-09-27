@@ -14,8 +14,8 @@
 <body>
   <header class="site-header">
     <h1>URLPurifier</h1>
-    <p class="subtitle">URL浄化ツール（Amazon専用最短化モード搭載）</p>
-    <button id="btnTheme" type="button" class="btn-theme" aria-label="テーマ切り替え" title="ライト/ダークモード切り替え">
+    <p class="subtitle" data-i18n="app.subtitle">URL浄化ツール</p>
+    <button id="btnTheme" type="button" class="btn-theme" data-i18n-attr="aria-label: theme.toggle, title: theme.toggleTitle" aria-label="テーマ切り替え" title="ライト/ダークモード切り替え">
       <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"></circle>
         <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -31,15 +31,16 @@
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
       </svg>
     </button>
-    <button id="btnHelp" type="button" class="btn-help" aria-label="ヘルプ">?</button>
+    <button id="btnLang" type="button" class="btn-lang" data-i18n="lang.toggle" data-i18n-attr="title: lang.toggleTitle, aria-label: lang.toggleTitle">English</button>
+    <button id="btnHelp" type="button" class="btn-help" data-i18n-attr="aria-label: help.open" aria-label="ヘルプ">?</button>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2>クリーン化</h2>
+      <h2 data-i18n="form.clean">クリーン化</h2>
       <div class="form-row">
-        <label for="inputUrls" class="label">URLを貼り付け（複数行OK）</label>
-        <textarea id="inputUrls" class="textarea" rows="8" placeholder="例：
+        <label for="inputUrls" class="label" data-i18n="form.inputLabel">URLを貼り付け（複数行OK）</label>
+        <textarea id="inputUrls" class="textarea" rows="8" data-i18n-attr="placeholder: form.inputPlaceholder" placeholder="例：
 https://www.amazon.co.jp/dp/XXXXXXXXXX?tag=abc-22&ref=abc&utm_source=x
 https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
       </div>
@@ -47,33 +48,35 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
       <div class="options">
         <label class="checkbox">
           <input type="checkbox" id="amazonMode" />
-          <span>Amazonアフィリエイト除去・最短化モード（/dp/ASIN に変換）</span>
+          <span data-i18n="form.amazonMode">Amazonのリンクを /dp/ASIN の形まで短くする</span>
         </label>
         <label class="checkbox">
           <input type="checkbox" id="strictBlocklist" />
-          <span>詳細除去モード（より多くの一般的トラッキングを削除）</span>
+          <span data-i18n="form.strictMode">詳細除去モード</span>
         </label>
       </div>
 
       <div class="buttons">
-        <button id="btnClean" type="button" class="btn primary">クリーン化</button>
-        <button id="btnClear" type="button" class="btn ghost">クリア</button>
+        <button id="btnClean" type="button" class="btn primary" data-i18n="form.clean">クリーン化</button>
+        <button id="btnClear" type="button" class="btn ghost" data-i18n="form.clear">クリア</button>
       </div>
 
       <div class="form-row">
         <div class="label-with-button">
-          <label for="outputUrls" class="label">結果</label>
-          <button id="btnCopy" type="button" class="btn-copy-output">結果をコピー</button>
+          <label for="outputUrls" class="label" data-i18n="form.outputLabel">結果</label>
+          <button id="btnCopy" type="button" class="btn-copy-output" data-i18n="form.copy">結果をコピー</button>
         </div>
-        <textarea id="outputUrls" class="textarea" rows="8" readonly placeholder="ここにクリーン化結果が表示されます"></textarea>
+        <textarea id="outputUrls" class="textarea" rows="8" readonly data-i18n-attr="placeholder: form.outputPlaceholder" placeholder="ここに結果が出ます"></textarea>
       </div>
 
       <details class="details">
-        <summary>何を削除する？（概要）</summary>
+        <summary data-i18n="summary.title">何を消す？（概要）</summary>
         <ul>
-          <li>共通：utm_* / fbclid / gclid / dclid / msclkid などのトラッキング系</li>
-          <li>Amazonモード：tag / ref などを除去し、/dp/ASIN へ正規化</li>
-          <li>詳細除去モード：メール配信・MA系や広告計測由来の代表的なパラメーターも追加で削除</li>
+          <li data-i18n="summary.common"></li>
+          <li data-i18n="summary.site"></li>
+          <li data-i18n="summary.amazon"></li>
+          <li data-i18n="summary.strict"></li>
+          <li data-i18n="summary.fragment"></li>
         </ul>
       </details>
     </section>
@@ -81,7 +84,7 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
 
   <footer>
     <div class="footer">
-      🔗 GitHubリポジトリはこちら（ <a href="https://github.com/ipusiron/urlpurifier" target="_blank" rel="noopener noreferrer">ipusiron/urlpurifier</a> ）
+      <span data-i18n="footer.repo">🔗 GitHubリポジトリはこちら</span>（ <a href="https://github.com/ipusiron/urlpurifier" target="_blank" rel="noopener noreferrer">ipusiron/urlpurifier</a> ）
     </div>
   </footer>
 
@@ -89,138 +92,53 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
   <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="helpModalTitle">URLPurifier ヘルプ</h2>
-        <button class="modal-close" type="button" aria-label="閉じる">&times;</button>
+        <h2 id="helpModalTitle" data-i18n="modal.title">URLPurifier のヘルプ</h2>
+        <button class="modal-close" type="button" data-i18n-attr="aria-label: common.close" aria-label="閉じる">&times;</button>
       </div>
       <div class="modal-body">
         <section>
-          <h3>🎯 このツールについて</h3>
-          <p>URLPurifierは、URLに含まれる不要なトラッキングパラメーターやアフィリエイトタグを削除し、純粋でクリーンなリンクを生成するツールです。すべての処理はブラウザー内で完結し、外部サーバーへの送信は一切行いません。</p>
+          <h3 data-i18n="help.about.title">このツールについて</h3>
+          <p data-i18n="help.about.body"></p>
         </section>
 
         <section>
-          <h3>📝 使い方</h3>
+          <h3 data-i18n="help.use.title">使い方</h3>
           <ol>
-            <li><strong>URLを入力</strong>: 上部のテキストエリアにクリーン化したいURLを貼り付けます（複数行対応）</li>
-            <li><strong>オプション選択</strong>:
-              <ul>
-                <li><strong>Amazonアフィリエイト除去モード</strong>: Amazon URLを最短の/dp/ASIN形式に変換</li>
-                <li><strong>詳細除去モード</strong>: より多くのトラッキングパラメーターを削除</li>
-              </ul>
-            </li>
-            <li><strong>クリーン化実行</strong>: 「クリーン化」ボタンをクリック</li>
-            <li><strong>結果をコピー</strong>: クリーン化されたURLが下部に表示されます</li>
+            <li data-i18n-html="help.use.step1html"></li>
+            <li data-i18n-html="help.use.step2html"></li>
+            <li data-i18n-html="help.use.step3html"></li>
+            <li data-i18n-html="help.use.step4html"></li>
           </ol>
         </section>
 
         <section>
-          <h3>🔍 削除されるパラメーター</h3>
-          <h4>基本的な削除対象（常に削除）:</h4>
+          <h3 data-i18n="help.remove.title">消すもの</h3>
           <ul>
-            <li><strong>Google Analytics</strong>: <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_term</code>, <code>utm_content</code></li>
-            <li><strong>主要広告プラットフォーム</strong>:
-              <ul>
-                <li><code>fbclid</code> - Facebook広告クリックID</li>
-                <li><code>gclid</code> - Google広告クリックID</li>
-                <li><code>dclid</code> - DoubleClickクリックID</li>
-                <li><code>msclkid</code> - Microsoft広告クリックID</li>
-              </ul>
-            </li>
-            <li><strong>メール配信系</strong>:
-              <ul>
-                <li><code>mc_cid</code>, <code>mc_eid</code> - Mailchimp</li>
-                <li><code>_hsenc</code>, <code>_hsmi</code> - HubSpot</li>
-              </ul>
-            </li>
-            <li><strong>その他</strong>: <code>igshid</code> (Instagram), <code>spm</code> (Alibaba), <code>yclid</code> (Yahoo), <code>gbraid</code>, <code>wbraid</code></li>
-          </ul>
-
-          <h4>🔥 詳細除去モードとは？</h4>
-          <p class="help-callout">
-            <strong>詳細除去モード</strong>は、通常モードでは削除しない追加のパラメーターを削除するオプションです。<br>
-            より徹底的にトラッキングを除去したい場合に有効化してください。
-          </p>
-          
-          <h4>詳細除去モードで追加削除されるもの:</h4>
-          <ul>
-            <li><strong>SNS広告系（新興プラットフォーム）</strong>:
-              <ul>
-                <li><code>ttclid</code> - TikTok広告クリックID</li>
-                <li><code>twclid</code> - Twitter広告クリックID</li>
-                <li><code>li_fat_id</code> - LinkedIn広告追跡ID</li>
-              </ul>
-            </li>
-            <li><strong>汎用キャンペーンパラメーター</strong>:
-              <ul>
-                <li><code>campaign</code>, <code>camp</code> - 汎用的なキャンペーン名</li>
-                <li><code>adgroup</code>, <code>adid</code> - 広告グループ・広告ID</li>
-                <li><code>creative</code> - クリエイティブID</li>
-                <li><code>ef_id</code> - 効果測定ID</li>
-                <li><code>cmpid</code> - キャンペーンID</li>
-              </ul>
-            </li>
-            <li><strong>参照元系（注意が必要）</strong>:
-              <ul>
-                <li><code>ref_src</code>, <code>ref_url</code> - 参照元URL</li>
-                <li>⚠️ これらは一部のサイトで機能的に必要な場合があります</li>
-              </ul>
-            </li>
-          </ul>
-
-          <h4>いつ詳細除去モードを使うべき？</h4>
-          <ul>
-            <li>✅ <strong>使うべき場合</strong>: プライバシー最優先、内部キャンペーンも削除したい、完全にクリーンなURL希望</li>
-            <li>❌ <strong>使わない方が良い場合</strong>: サイトの機能を壊したくない、通常の共有で十分</li>
-          </ul>
-
-          <h4>Amazon専用（Amazonモード時）:</h4>
-          <ul>
-            <li><code>tag</code> - アフィリエイトタグ</li>
-            <li><code>ref</code> - 参照元情報</li>
-            <li><code>psc</code>, <code>smid</code> - 販売者情報</li>
-            <li><code>keywords</code>, <code>qid</code> - 検索関連</li>
-            <li>その他Amazon固有のトラッキング</li>
+            <li data-i18n-html="help.remove.commonhtml"></li>
+            <li data-i18n-html="help.remove.sitehtml"></li>
+            <li data-i18n-html="help.remove.strricthtml"></li>
+            <li data-i18n-html="help.remove.amazonhtml"></li>
+            <li data-i18n-html="help.remove.fragmenthtml"></li>
           </ul>
         </section>
 
         <section>
-          <h3>💡 活用例</h3>
-          <ul>
-            <li><strong>SNS共有時</strong>: 長いURLを短く見やすくして共有</li>
-            <li><strong>プライバシー保護</strong>: トラッキングを除去してプライバシーを守る</li>
-            <li><strong>Amazon商品リンク</strong>: アフィリエイトタグのない純粋な商品リンクを作成</li>
-            <li><strong>ドキュメント作成</strong>: 技術文書やブログ記事での参照リンクをクリーンに</li>
-          </ul>
+          <h3 data-i18n="help.keep.title">消さないもの</h3>
+          <p data-i18n="help.keep.body"></p>
         </section>
 
         <section>
-          <h3>⚠️ 注意事項</h3>
-          <ul>
-            <li>一部のサイトでは、特定のパラメーターが機能的に必要な場合があります</li>
-            <li>セッション情報を含むパラメーターを削除すると、ログイン状態が維持されない場合があります</li>
-            <li>クリーン化後のURLが意図通りに動作しない場合は、元のURLを使用してください</li>
-          </ul>
+          <h3 data-i18n="help.risk.title">貼る前に見ておきたい点</h3>
+          <p class="help-callout" data-i18n="help.risk.body"></p>
         </section>
 
         <section>
-          <h3>🔒 プライバシーとセキュリティ</h3>
-          <p>URLPurifierは完全にクライアントサイドで動作します。入力されたURLは：</p>
+          <h3 data-i18n="help.privacy.title">プライバシーと、このツールの限界</h3>
           <ul>
-            <li>✅ 外部サーバーへ送信されません</li>
-            <li>✅ ローカルストレージに保存されません</li>
-            <li>✅ クッキーを使用しません</li>
-            <li>✅ アクセスログを記録しません</li>
-          </ul>
-        </section>
-
-        <section>
-          <h3>📊 対応URL形式</h3>
-          <p>以下の形式のURLに対応しています：</p>
-          <ul>
-            <li>標準的なHTTP/HTTPS URL</li>
-            <li>スキーマなしのURL（自動的にhttps://を付与）</li>
-            <li>各種Amazon国別ドメイン（.com, .co.jp, .co.uk等）</li>
-            <li>短縮URL（展開はしませんが、パラメータは削除）</li>
+            <li data-i18n="help.privacy.local"></li>
+            <li data-i18n="help.privacy.scheme"></li>
+            <li data-i18n="help.privacy.shortener"></li>
+            <li data-i18n="help.privacy.frame"></li>
           </ul>
         </section>
       </div>
@@ -230,6 +148,7 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="./i18n.js"></script>
   <script src="./script.js"></script>
 </body>
 </html>

@@ -66,7 +66,7 @@ Six things that are not removed, but are worth knowing about.
 | Notice | What is going on |
 |---|---|
 | A user name is embedded in the URL | In `https://www.google.com@evil.example/`, what comes before the `@` is not the site |
-| The host name contains encoded characters | A part starting with `xn--` is not what it appears to spell |
+| The host name imitates Latin letters | Cyrillic and similar letters used to look like `apple`. Domains that simply use their own language, such as Japanese ones, are not flagged |
 | An unusual port number | Something other than 80 or 443 |
 | The connection is not encrypted | Still `http://` |
 | A shortened URL | You cannot see where it goes; this tool does not expand it |
@@ -113,7 +113,7 @@ There are no dependencies. Node.js 22 or later is required.
 npm test
 ```
 
-37 tests check that:
+42 tests check that:
 
 - Schemes such as `javascript:` are never emitted, and invented URLs are never produced
 - Per-site rules apply only on those sites
@@ -142,6 +142,7 @@ urlpurifier/
 │   ├── features.test.js      # Per-site rules, the breakdown and the notices
 │   ├── markup.test.js        # CSP, markup and accessibility
 │   ├── i18n.test.js          # The dictionaries and the absence of hard-coded text
+│   ├── idn.test.js           # Punycode decoding and look-alike host detection
 │   └── docs.test.js          # Consistency of the README files
 ├── .github/workflows/test.yml # Runs the tests on push and pull request
 ├── package.json              # Just calls node --test; no dependencies

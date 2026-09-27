@@ -63,7 +63,7 @@ test("消したものに、名前と説明の対応が付く", () => {
 test("貼る前に見ておきたい点を挙げる", () => {
   const expectations = [
     ["https://www.google.com@evil.example/login", "userinfo"],
-    ["https://xn--80ak6aa92e.com/", "punycode"],
+    ["https://xn--80ak6aa92e.com/", "lookalike"],
     ["https://example.com:8443/admin", "port"],
     ["http://example.com/page", "plainHttp"],
     ["https://bit.ly/3abcDEF", "shortener"],

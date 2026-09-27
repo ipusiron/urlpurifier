@@ -83,8 +83,8 @@ const MESSAGES = {
 
     "risk.userinfo.label": "URLに利用者名が埋め込まれている",
     "risk.userinfo.body": "@ の前は「どのサイトか」ではありません。本物らしい名前を置いて、別のサイトへ誘う手口に使われます。@ の直後のホスト名を見てください。",
-    "risk.punycode.label": "別の文字が混ざったホスト名",
-    "risk.punycode.body": "見た目が似た文字を使って、本物のドメインに見せかけることがあります。xn-- で始まる部分は、そのまま読める文字ではありません。",
+    "risk.lookalike.label": "ラテン文字に見せかけたホスト名",
+    "risk.lookalike.body": "ラテン文字によく似た別の文字（キリル文字など）が使われています。見た目が同じでも別のドメインです。表示している読み方をよく見てください。なお、日本語ドメインのように、その言語の文字を正しく使っているものは指摘しません。",
     "risk.port.label": "ふつうと違うポート番号",
     "risk.port.body": "80と443以外が指定されています。おかしいとは限りませんが、公式の案内にあるかを確かめてください。",
     "risk.plainHttp.label": "暗号化されていない通信",
@@ -114,7 +114,7 @@ const MESSAGES = {
     "help.keep.body": "消すと意味が変わる値は残します。検索語、記事の番号、ページ番号、YouTubeの再生位置などです。同じ名前でも、サイトが違えば残します。たとえば t= は X では落としますが、ほかのサイトでは触りません。",
 
     "help.risk.title": "⚠️ 貼る前に見ておきたい点",
-    "help.risk.body": "消す対象ではないけれど、知らないと損をするものを挙げます。URLに利用者名が入っている、xn-- で始まるホスト名、ふつうと違うポート番号、http のまま、短縮URL、パラメーターが別のURLを連れている、の6つです。",
+    "help.risk.body": "消す対象ではないけれど、知らないと損をするものを挙げます。URLに利用者名が入っている、ラテン文字に見せかけたホスト名、ふつうと違うポート番号、http のまま、短縮URL、パラメーターが別のURLを連れている、の6つです。",
 
     "help.privacy.title": "🔒 プライバシーと、このツールの限界",
     "help.privacy.local": "入力したURLは外へ送りません。保存もしません。Cookieも使いません。画面の設定（テーマと言語）だけは、この端末に保存します。",
@@ -208,8 +208,8 @@ const MESSAGES = {
 
     "risk.userinfo.label": "A user name is embedded in the URL",
     "risk.userinfo.body": "What comes before the @ is not the site. A convincing name can be placed there to lead you somewhere else. Read the host name right after the @.",
-    "risk.punycode.label": "The host name contains encoded characters",
-    "risk.punycode.body": "Look-alike characters can be used to imitate a real domain. A part starting with xn-- is not what it appears to spell.",
+    "risk.lookalike.label": "The host name imitates Latin letters",
+    "risk.lookalike.body": "Characters that closely resemble Latin letters (Cyrillic, for instance) are in use. It looks the same but it is a different domain. Read the decoded form shown here. Domains that simply use their own language, such as Japanese ones, are not flagged.",
     "risk.port.label": "An unusual port number",
     "risk.port.body": "Something other than 80 or 443 is specified. That is not wrong in itself, but check it against the official instructions.",
     "risk.plainHttp.label": "The connection is not encrypted",
@@ -239,7 +239,7 @@ const MESSAGES = {
     "help.keep.body": "Values that change the meaning of a link are kept: search terms, article and page numbers, the playback position on YouTube. The same name is treated differently per site. For instance t= is dropped on X but left alone elsewhere.",
 
     "help.risk.title": "⚠️ Worth a look before you paste",
-    "help.risk.body": "These are not removed, but they are worth knowing about: a user name embedded in the URL, a host name starting with xn--, an unusual port number, plain http, a shortened URL, and a parameter carrying another URL.",
+    "help.risk.body": "These are not removed, but they are worth knowing about: a user name embedded in the URL, a host name imitating Latin letters, an unusual port number, plain http, a shortened URL, and a parameter carrying another URL.",
 
     "help.privacy.title": "🔒 Privacy, and what this tool cannot do",
     "help.privacy.local": "The URLs you type are not sent anywhere, not stored, and no cookies are used. Only your display settings (theme and language) are kept on this device.",

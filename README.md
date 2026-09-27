@@ -102,7 +102,7 @@ hub: true
 | 指摘 | 何が起きているか |
 |---|---|
 | URLに利用者名が埋め込まれている | `https://www.google.com@evil.example/` の`@`の前はサイト名ではない |
-| 別の文字が混ざったホスト名 | `xn--`で始まる部分は、見た目どおりに読める文字ではない |
+| ラテン文字に見せかけたホスト名 | キリル文字などで`apple`に似せる手口。日本語ドメインのように、その言語の文字を正しく使うものは指摘しない |
 | ふつうと違うポート番号 | 80と443以外が指定されている |
 | 暗号化されていない通信 | `http://`のまま |
 | 短縮URL | 行き先が見えない。このツールは展開しない |
@@ -149,7 +149,7 @@ base-uri 'self'; form-action 'self'; object-src 'none';
 npm test
 ```
 
-37件のテストがあり、次を確かめます。
+42件のテストがあり、次を確かめます。
 
 - `javascript:`などのスキームを出力しないこと、偽のURLを作らないこと
 - サイト別ルールが、そのサイトでだけ効くこと
@@ -178,6 +178,7 @@ urlpurifier/
 │   ├── features.test.js      # サイト別ルール・内訳・危険サイン
 │   ├── markup.test.js        # CSP・マークアップ・アクセシビリティ
 │   ├── i18n.test.js          # 日英の辞書と文言の集約
+│   ├── idn.test.js           # punycodeのデコードと、見せかけホスト名の判定
 │   └── docs.test.js          # READMEの整合
 ├── .github/workflows/test.yml # pushとpull requestでテストを実行
 ├── package.json              # node --test を呼ぶだけ。依存なし

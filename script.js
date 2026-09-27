@@ -164,6 +164,136 @@ function stripFragment(urlObj) {
 }
 
 /**
+ * Punycode（RFC 3492）のデコード。依存を増やさないためにここへ置く。
+ * new URL() はホスト名を常に punycode へ正規化するので、
+ * 日本語ドメインを入れても xn--wgv71a119e.jp の形で返ってくる。
+ * 元の文字に戻さないと、危険なホモグラフと正当な国際化ドメインを見分けられない。
+ */
+const PUNYCODE_BASE = 36;
+const PUNYCODE_TMIN = 1;
+const PUNYCODE_TMAX = 26;
+const PUNYCODE_SKEW = 38;
+const PUNYCODE_DAMP = 700;
+const PUNYCODE_INITIAL_BIAS = 72;
+const PUNYCODE_INITIAL_N = 128;
+
+function punycodeAdapt(delta, numPoints, firstTime) {
+  let d = firstTime ? Math.floor(delta / PUNYCODE_DAMP) : delta >> 1;
+  d += Math.floor(d / numPoints);
+  let k = 0;
+  while (d > ((PUNYCODE_BASE - PUNYCODE_TMIN) * PUNYCODE_TMAX) >> 1) {
+    d = Math.floor(d / (PUNYCODE_BASE - PUNYCODE_TMIN));
+    k += PUNYCODE_BASE;
+  }
+  return k + Math.floor(((PUNYCODE_BASE - PUNYCODE_TMIN + 1) * d) / (d + PUNYCODE_SKEW));
+}
+
+/** 1ラベルぶんをデコードする。解釈できなければ null を返す。 */
+function punycodeDecodeLabel(label) {
+  const input = label.toLowerCase();
+  if (!input.startsWith("xn--")) return null;
+
+  const encoded = input.slice(4);
+  const lastDelimiter = encoded.lastIndexOf("-");
+  const basic = lastDelimiter > 0 ? encoded.slice(0, lastDelimiter) : "";
+  const digits = lastDelimiter > 0 ? encoded.slice(lastDelimiter + 1) : encoded;
+
+  const output = [...basic];
+  let n = PUNYCODE_INITIAL_N;
+  let bias = PUNYCODE_INITIAL_BIAS;
+  let i = 0;
+  let index = 0;
+
+  while (index < digits.length) {
+    const oldi = i;
+    let w = 1;
+
+    for (let k = PUNYCODE_BASE; ; k += PUNYCODE_BASE) {
+      if (index >= digits.length) return null;
+      const code = digits.charCodeAt(index);
+      index += 1;
+
+      let digit;
+      if (code >= 0x30 && code <= 0x39) digit = code - 0x30 + 26;
+      else if (code >= 0x61 && code <= 0x7a) digit = code - 0x61;
+      else return null;
+
+      if (digit >= PUNYCODE_BASE) return null;
+      i += digit * w;
+
+      const t = k <= bias ? PUNYCODE_TMIN : (k >= bias + PUNYCODE_TMAX ? PUNYCODE_TMAX : k - bias);
+      if (digit < t) break;
+      w *= PUNYCODE_BASE - t;
+    }
+
+    bias = punycodeAdapt(i - oldi, output.length + 1, oldi === 0);
+    n += Math.floor(i / (output.length + 1));
+    i %= output.length + 1;
+    if (n > 0x10ffff) return null;
+    output.splice(i, 0, String.fromCodePoint(n));
+    i += 1;
+  }
+
+  return output.join("");
+}
+
+/** ホスト名全体を、読める文字へ戻す。戻せないラベルはそのまま残す。 */
+function decodeHostname(hostname) {
+  return hostname
+    .split(".")
+    .map((label) => punycodeDecodeLabel(label) || label)
+    .join(".");
+}
+
+/**
+ * ラテン文字に見せかけたホスト名を見つける。
+ *
+ * 「xn-- で始まるかどうか」では、日本語ドメインもドイツ語ドメインも引っかかる。
+ * 実際に危ないのは、ラテン文字とよく似た形を持つ文字体系（キリル・ギリシャ・
+ * チェロキー）が、ラテン文字のTLDの下で使われている場合である。
+ * аррӏе.com はキリル文字だけで "apple" に見える。
+ * いっぽう пример.рф は、TLDもキリルなので、なりすましではない。
+ */
+const CONFUSABLE_SCRIPTS = [
+  ["Cyrillic", /\p{Script=Cyrillic}/u],
+  ["Greek", /\p{Script=Greek}/u],
+  ["Cherokee", /\p{Script=Cherokee}/u]
+];
+
+function findLookalikeLabel(decodedHost) {
+  const labels = decodedHost.split(".");
+  const tld = labels[labels.length - 1] || "";
+  const tldIsAscii = /^[a-z0-9-]+$/i.test(tld);
+
+  for (const label of labels.slice(0, -1)) {
+    for (const [script, pattern] of CONFUSABLE_SCRIPTS) {
+      if (!pattern.test(label)) continue;
+      // ラテン文字と同居している（混ぜて似せる手口）
+      if (/\p{Script=Latin}/u.test(label)) return { label, script, reason: "mixed" };
+      // ラテン文字のTLDの下で、その文字体系だけを使っている
+      if (tldIsAscii) return { label, script, reason: "underAsciiTld" };
+    }
+  }
+  return null;
+}
+
+/**
+ * 入力が読める文字のホスト名だったなら、その形で返す。
+ * new URL() はホスト名を punycode へ正規化するので、
+ * 日本語.jp を入れると xn--wgv71a119e.jp が返ってきてしまう。
+ * 追跡用の値を落とすという役目を超えて見た目を変えないようにする。
+ */
+function restoreReadableHost(urlString, urlObj, originalInput) {
+  if (!/[^\u0000-\u007F]/.test(originalInput)) return urlString;
+
+  const decodedHost = decodeHostname(urlObj.hostname);
+  if (decodedHost === urlObj.hostname) return urlString;
+
+  const port = urlObj.port ? `:${urlObj.port}` : "";
+  return urlString.replace(`//${urlObj.host}`, `//${decodedHost}${port}`);
+}
+
+/**
  * URLに残る「気をつける点」を挙げる。
  * 消す対象ではないが、貼る前に見ておきたいもの。
  */
@@ -175,8 +305,12 @@ function analyzeRisks(urlObj) {
     risks.push({ id: "userinfo", detail: urlObj.username });
   }
 
-  if (host.split(".").some((label) => label.startsWith("xn--"))) {
-    risks.push({ id: "punycode", detail: host });
+  // xn-- で始まるかどうかでは、日本語ドメインもドイツ語ドメインも引っかかる。
+  // 読める文字へ戻してから、ラテン文字に見せかけているものだけを挙げる。
+  const decodedHost = decodeHostname(host);
+  const lookalike = findLookalikeLabel(decodedHost);
+  if (lookalike) {
+    risks.push({ id: "lookalike", detail: decodedHost });
   }
 
   if (urlObj.port && urlObj.port !== "80" && urlObj.port !== "443") {
@@ -479,7 +613,7 @@ function cleanOne(raw, opts) {
   // 気をつける点は、消したあとの姿で判定する
   const risks = analyzeRisks(urlObj);
 
-  const cleanedUrl = urlObj.toString();
+  const cleanedUrl = restoreReadableHost(urlObj.toString(), urlObj, input);
   const newParamCount = [...urlObj.searchParams].length;
   const paramsRemoved = originalParamCount - newParamCount;
   const changed = originalUrl !== cleanedUrl || amazonNormalized;

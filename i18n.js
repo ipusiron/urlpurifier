@@ -15,6 +15,7 @@ const MESSAGES = {
     "form.amazonMode": "Amazonのリンクを /dp/ASIN の形まで短くする",
     "form.strictMode": "詳細除去モード（広告や配信まわりの値も落とす）",
     "form.clean": "クリーン化",
+    "form.cleanHint": "Ctrl+Enter でも実行できます",
     "form.clear": "クリア",
     "form.outputLabel": "結果",
     "form.outputPlaceholder": "ここに結果が出ます",
@@ -116,7 +117,7 @@ const MESSAGES = {
     "help.risk.body": "消す対象ではないけれど、知らないと損をするものを挙げます。URLに利用者名が入っている、xn-- で始まるホスト名、ふつうと違うポート番号、http のまま、短縮URL、パラメーターが別のURLを連れている、の6つです。",
 
     "help.privacy.title": "🔒 プライバシーと、このツールの限界",
-    "help.privacy.local": "入力したURLは外へ送りません。保存もしません。Cookieも使いません。",
+    "help.privacy.local": "入力したURLは外へ送りません。保存もしません。Cookieも使いません。画面の設定（テーマと言語）だけは、この端末に保存します。",
     "help.privacy.scheme": "http と https 以外は浄化しません。javascript: や data: は、貼った先で動く危険があるため、出力しません。",
     "help.privacy.shortener": "短縮URLは展開しません。開いた先で追跡用の値が付くことがあります。",
     "help.privacy.frame": "クリックジャッキング対策の frame-ancestors は、meta要素のCSPでは効きません。静的ホスティングではHTTPヘッダーを足せないため、このツールでは指定していません。",
@@ -139,6 +140,7 @@ const MESSAGES = {
     "form.amazonMode": "Shorten Amazon links to the /dp/ASIN form",
     "form.strictMode": "Thorough mode (also drop advertising and mailing values)",
     "form.clean": "Clean",
+    "form.cleanHint": "Ctrl+Enter also runs it",
     "form.clear": "Clear",
     "form.outputLabel": "Result",
     "form.outputPlaceholder": "The result appears here",
@@ -240,7 +242,7 @@ const MESSAGES = {
     "help.risk.body": "These are not removed, but they are worth knowing about: a user name embedded in the URL, a host name starting with xn--, an unusual port number, plain http, a shortened URL, and a parameter carrying another URL.",
 
     "help.privacy.title": "🔒 Privacy, and what this tool cannot do",
-    "help.privacy.local": "The URLs you type are not sent anywhere, not stored, and no cookies are used.",
+    "help.privacy.local": "The URLs you type are not sent anywhere, not stored, and no cookies are used. Only your display settings (theme and language) are kept on this device.",
     "help.privacy.scheme": "Only http and https are cleaned. javascript: and data: are never emitted, because they can run wherever you paste them.",
     "help.privacy.shortener": "Shortened URLs are not expanded. Tracking values may be added at the other end.",
     "help.privacy.frame": "frame-ancestors, the clickjacking defence, has no effect in a meta CSP. Static hosting cannot add HTTP headers, so this tool does not set it.",

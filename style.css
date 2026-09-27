@@ -873,3 +873,64 @@ input[type="checkbox"]{
 .footer{
   color: var(--subtitle);
 }
+
+/* ヘッダー右上の操作をまとめて並べる。
+   以前は3つとも position: fixed で右端からの距離を個別に指定していたため、
+   言語ボタンを足したときに重なって文字が切れていた。 */
+.header-actions{
+  position: fixed;
+  top: 24px;
+  right: max(20px, calc(50% - 460px + 20px));
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  z-index: 100;
+}
+
+.header-actions .btn-theme,
+.header-actions .btn-help,
+.header-actions .btn-lang{
+  position: static;
+  right: auto;
+  top: auto;
+  margin: 0;
+}
+
+.header-actions .btn-lang{
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px){
+  .header-actions{
+    position: static;
+    justify-content: center;
+    margin: .75rem auto 0;
+  }
+
+  .header-actions .btn-lang{
+    display: inline-block;
+    margin: 0;
+  }
+}
+
+/* トーストは画面下へ出す。
+   右上のままだと、ヘッダーのボタン（テーマ・言語・ヘルプ）に重なる。 */
+.toast{
+  top: auto;
+  bottom: -100px;
+  right: 20px;
+  left: auto;
+}
+
+.toast.show{
+  top: auto;
+  bottom: 20px;
+}
+
+@media (max-width: 600px){
+  .toast{
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}

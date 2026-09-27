@@ -15,7 +15,8 @@
   <header class="site-header">
     <h1>URLPurifier</h1>
     <p class="subtitle" data-i18n="app.subtitle">URL浄化ツール</p>
-    <button id="btnTheme" type="button" class="btn-theme" data-i18n-attr="aria-label: theme.toggle, title: theme.toggleTitle" aria-label="テーマ切り替え" title="ライト/ダークモード切り替え">
+    <div class="header-actions">
+      <button id="btnTheme" type="button" class="btn-theme" data-i18n-attr="aria-label: theme.toggle, title: theme.toggleTitle" aria-label="テーマ切り替え" title="ライト/ダークモード切り替え">
       <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"></circle>
         <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -33,6 +34,7 @@
     </button>
     <button id="btnLang" type="button" class="btn-lang" data-i18n="lang.toggle" data-i18n-attr="title: lang.toggleTitle, aria-label: lang.toggleTitle">English</button>
     <button id="btnHelp" type="button" class="btn-help" data-i18n-attr="aria-label: help.open" aria-label="ヘルプ">?</button>
+    </div>
   </header>
 
   <main class="container">
@@ -57,7 +59,7 @@ https://example.com/article?utm_source=twitter&fbclid=xxx"></textarea>
       </div>
 
       <div class="buttons">
-        <button id="btnClean" type="button" class="btn primary" data-i18n="form.clean">クリーン化</button>
+        <button id="btnClean" type="button" class="btn primary" data-i18n="form.clean" data-i18n-attr="title: form.cleanHint" title="Ctrl+Enter でも実行できます">クリーン化</button>
         <button id="btnClear" type="button" class="btn ghost" data-i18n="form.clear">クリア</button>
       </div>
 

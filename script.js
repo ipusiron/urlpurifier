@@ -29,7 +29,7 @@ const AMAZON_EXACT_BLOCKS = [
 ];
 
 /** Amazon ドメイン判定 */
-const AMAZON_HOST_RE = /(^|\.)amazon\.(com|co\.jp|co\.uk|de|fr|it|es|ca|com\.mx|com\.au|nl|sg|in|ae|sa|se|pl|eg|tr)$/i;
+const AMAZON_HOST_RE = /(^|\.)amazon\.(com|co\.jp|co\.uk|de|fr|it|es|ca|com\.mx|com\.au|com\.br|nl|sg|in|ae|sa|se|pl|eg|tr)$/i;
 
 /**
  * サイト別に落とすパラメーター。
@@ -298,12 +298,17 @@ function el(tag, props = {}, children = []) {
   return node;
 }
 
-/** 報告用のパネルを1つ用意する（なければ作る）。 */
-function ensurePanel(id, className) {
+/**
+ * 報告用のパネルを1つ用意する（なければ作る）。
+ * afterId を渡すと、そのパネルの後ろへ置く。
+ * 渡さないと、あとから作ったほうが前に来て、内訳より注意書きが上に出てしまう。
+ */
+function ensurePanel(id, className, afterId = null) {
   let panel = document.getElementById(id);
   if (!panel) {
     panel = el("div", { id, class: className });
-    const anchor = document.getElementById("stats") ||
+    const anchor = (afterId && document.getElementById(afterId)) ||
+      document.getElementById("stats") ||
       document.querySelector("#outputUrls").closest(".form-row");
     anchor.insertAdjacentElement("afterend", panel);
   }
@@ -355,7 +360,7 @@ function updateRemovedReport(removed) {
  * ここで挙げるのは「危険だと決めつけられないが、知らないと損をするもの」である。
  */
 function updateRiskReport(risks) {
-  const panel = ensurePanel("riskReport", "report-panel risk-panel");
+  const panel = ensurePanel("riskReport", "report-panel risk-panel", "removedReport");
   if (!risks || risks.length === 0) {
     panel.hidden = true;
     return;
@@ -634,30 +639,48 @@ function setupUI() {
     }
   });
 
+  // 貼ってすぐ実行できるように、Ctrl+Enter（Macは Cmd+Enter）でも動かす
+  $in.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      $btnClean.click();
+    }
+  });
+
   $btnCopy.addEventListener("click", async () => {
     if (!$out.value) return;
     const originalText = $btnCopy.textContent;
+
+    const markCopied = () => {
+      $btnCopy.textContent = uiText("form.copied");
+      $btnCopy.classList.add("copied");
+      showToast(uiText("toast.copied"));
+      setTimeout(() => {
+        $btnCopy.classList.remove("copied");
+        $btnCopy.textContent = originalText;
+      }, 1500);
+    };
+
     try {
       await navigator.clipboard.writeText($out.value);
-      $btnCopy.textContent = uiText("form.copied");
-      $btnCopy.classList.add("copied");
-      showToast(uiText("toast.copied"));
-      setTimeout(() => {
-        $btnCopy.classList.remove("copied");
-        $btnCopy.textContent = originalText;
-      }, 1500);
-    } catch {
-      // フォールバック
-      $out.select();
-      document.execCommand("copy");
-      $btnCopy.textContent = uiText("form.copied");
-      $btnCopy.classList.add("copied");
-      showToast(uiText("toast.copied"));
-      setTimeout(() => {
-        $btnCopy.classList.remove("copied");
-        $btnCopy.textContent = originalText;
-      }, 1500);
+      markCopied();
+      return;
+    } catch (e) {
+      // クリップボードが使えない場合（file:// や権限なし）は選択してから試す
     }
+
+    // execCommand は非推奨だが、代わりがない環境が残っている。
+    // 失敗したときは黙って終わらせず、手で選ぶように伝える。
+    let copied = false;
+    try {
+      $out.select();
+      copied = document.execCommand("copy");
+    } catch (e) {
+      copied = false;
+    }
+
+    if (copied) markCopied();
+    else showToast(uiText("toast.copyFailed"), "error");
   });
 
   $btnClear.addEventListener("click", () => {
@@ -728,25 +751,39 @@ function setupUI() {
 
   // テーマ切り替え
   const $btnTheme = document.getElementById("btnTheme");
-  
-  // 保存されたテーマを復元
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  if (savedTheme === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
+
+  // Storageを拒否するブラウザー（プライベートウィンドウなど）では
+  // localStorage へ触れるだけで例外になる。設定が戻らないだけなので、握って進む。
+  const readTheme = () => {
+    try {
+      return localStorage.getItem("theme");
+    } catch (e) {
+      return null;
+    }
+  };
+  const writeTheme = (value) => {
+    try {
+      localStorage.setItem("theme", value);
+    } catch (e) {
+      // 保存できなくても画面は動く
+    }
+  };
+
+  if (readTheme() === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
   }
 
   $btnTheme.addEventListener("click", () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    
-    if (newTheme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    const newTheme = currentTheme === "light" ? "dark" : "light";
+
+    if (newTheme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
     } else {
-      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.removeAttribute("data-theme");
     }
-    
-    // テーマをローカルストレージに保存
-    localStorage.setItem('theme', newTheme);
+
+    writeTheme(newTheme);
   });
 
   // URLプレビュー機能

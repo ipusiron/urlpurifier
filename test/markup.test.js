@@ -22,12 +22,15 @@ test("CSPを置き、不要なunsafe-inlineを含まない", () => {
 });
 
 test("style属性とインラインハンドラーを書かない", () => {
-  // style属性は CSP の style-src-attr に触れる。出し入れは hidden 属性で行う
+  // マークアップの style 属性と setAttribute("style", ...) は CSP の style-src-attr に触れる。
+  // element.style への書き込み（CSSOM）は触れないが、
+  // 出し入れは hidden 属性に寄せて、状態を1か所にまとめる。
   for (const [name, source] of [["index.html", html], ["script.js", js]]) {
     assert.doesNotMatch(source, /\sstyle\s*=\s*"/, `${name} にstyle属性がある`);
     assert.doesNotMatch(source, /\son[a-z]+\s*=\s*"/, `${name} にインラインハンドラーがある`);
   }
-  assert.doesNotMatch(js, /\.style\.display\s*=/, "style.display で出し入れしている");
+  assert.doesNotMatch(js, /\.style\.display\s*=/, "出し入れは hidden 属性に寄せる");
+  assert.doesNotMatch(js, /setAttribute\(\s*["']style["']/, "setAttribute('style') は style-src-attr に触れる");
   assert.match(css, /\[hidden\]\{\s*[\r\n]\s*display: none !important;/);
 });
 

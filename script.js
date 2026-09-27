@@ -294,6 +294,64 @@ function restoreReadableHost(urlString, urlObj, originalInput) {
 }
 
 /**
+ * 共有する前に外したほうがよいパラメーター名。
+ * 消しはしない。消すとリンクが動かなくなることがあるためで、
+ * 「これが付いたまま共有してよいか」を判断するのは利用者である。
+ */
+const SENSITIVE_PARAM_NAMES = [
+  "email", "e-mail", "mail", "mailaddress", "phone", "tel", "telephone",
+  "token", "access_token", "refresh_token", "id_token", "auth", "authorization",
+  "apikey", "api_key", "secret", "password", "passwd", "pwd",
+  "session", "sessionid", "session_id", "sid", "signature", "sig", "otp"
+];
+
+/** 値そのものが、見られると困る形をしているか */
+const EMAIL_VALUE_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const JWT_VALUE_RE = /^eyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\./;
+const LONG_RANDOM_RE = /^[A-Za-z0-9_-]{32,}$/;
+
+function classifySensitiveValue(value) {
+  if (EMAIL_VALUE_RE.test(value)) return "email";
+  if (JWT_VALUE_RE.test(value)) return "jwt";
+  if (LONG_RANDOM_RE.test(value)) return "longRandom";
+  return null;
+}
+
+/**
+ * リダイレクト先として連れているURLを取り出す。
+ * %2F などでエンコードされていることが多いので、1段だけ戻してから読む。
+ */
+function extractRedirectTarget(value) {
+  let candidate = value;
+  if (/^https?%3a/i.test(candidate)) {
+    try {
+      candidate = decodeURIComponent(candidate);
+    } catch (e) {
+      return null;
+    }
+  }
+  if (!/^(https?:\/\/|\/\/)/i.test(candidate)) return null;
+
+  try {
+    const target = new URL(candidate.startsWith("//") ? `https:${candidate}` : candidate);
+    if (!ALLOWED_PROTOCOLS.has(target.protocol)) return null;
+    return target;
+  } catch (e) {
+    return null;
+  }
+}
+
+/** 連れているURL自体に、目立つ問題がないかを1段だけ見る */
+function describeRedirectTarget(target) {
+  const decodedHost = decodeHostname(target.hostname);
+  const notes = [];
+  if (target.username || target.password) notes.push("userinfo");
+  if (findLookalikeLabel(decodedHost)) notes.push("lookalike");
+  if (target.protocol === "http:") notes.push("plainHttp");
+  return { host: decodedHost, notes };
+}
+
+/**
  * URLに残る「気をつける点」を挙げる。
  * 消す対象ではないが、貼る前に見ておきたいもの。
  */
@@ -327,10 +385,29 @@ function analyzeRisks(urlObj) {
 
   for (const [name, value] of urlObj.searchParams) {
     const lower = name.toLowerCase();
-    const looksRedirect = REDIRECT_PARAM_NAMES.includes(lower);
-    const carriesUrl = /^(https?:\/\/|\/\/)/i.test(value) || /^https?%3a%2f%2f/i.test(value);
-    if (looksRedirect && carriesUrl) {
-      risks.push({ id: "openRedirect", detail: `${name}=${value.slice(0, 60)}` });
+
+    // 別のURLを連れている場合は、その行き先も1段だけ見る
+    if (REDIRECT_PARAM_NAMES.includes(lower)) {
+      const target = extractRedirectTarget(value);
+      if (target) {
+        const described = describeRedirectTarget(target);
+        risks.push({
+          id: "openRedirect",
+          detail: `${name} → ${described.host}`,
+          target: target.toString(),
+          targetNotes: described.notes
+        });
+      }
+    }
+
+    // 共有する前に外したほうがよい値
+    if (SENSITIVE_PARAM_NAMES.includes(lower)) {
+      risks.push({ id: "sensitiveName", detail: `${name}=` });
+      continue;
+    }
+    const kind = classifySensitiveValue(value);
+    if (kind) {
+      risks.push({ id: "sensitiveValue", detail: `${name}=`, kind });
     }
   }
 
@@ -514,10 +591,21 @@ function updateRiskReport(risks) {
 
   const list = el("ul", { class: "report-list" });
   for (const risk of rows) {
+    // 連れているURL自体にも問題があれば、その場で添える
+    const targetNote = (risk.targetNotes && risk.targetNotes.length)
+      ? el("span", {
+          class: "risk-target-note",
+          text: uiText("risk.targetAlso", {
+            notes: risk.targetNotes.map((n) => uiText(`risk.${n}.label`)).join("、")
+          })
+        })
+      : null;
+
     list.append(el("li", { class: "report-item risk-item" }, [
       el("strong", { class: "risk-label", text: uiText(`risk.${risk.id}.label`) }),
       el("span", { class: "risk-body", text: uiText(`risk.${risk.id}.body`) }),
-      risk.detail ? el("code", { class: "risk-detail", text: String(risk.detail) }) : null
+      risk.detail ? el("code", { class: "risk-detail", text: String(risk.detail) }) : null,
+      targetNote
     ]));
   }
   panel.append(list);

@@ -91,8 +91,13 @@ const MESSAGES = {
     "risk.plainHttp.body": "http:// は途中で読まれたり書き換えられたりします。https:// の版があるかを確かめてください。",
     "risk.shortener.label": "短縮URL",
     "risk.shortener.body": "行き先が見えません。このツールは展開しないので、開いたあとのURLに追跡用の値が残ることがあります。",
+    "risk.targetAlso": "行き先にも気になる点があります：{notes}",
+    "risk.sensitiveName.label": "共有する前に外したいパラメーター",
+    "risk.sensitiveName.body": "連絡先や認証に関わる名前が付いています。消すとリンクが動かなくなることがあるので、このツールは消しません。人に渡すURLなら、外すか、渡さないほうが安全です。",
+    "risk.sensitiveValue.label": "値そのものが見られると困る形をしている",
+    "risk.sensitiveValue.body": "メールアドレス、JWT、長い乱数のような値が入っています。そのまま共有すると、本人になりすませる場合があります。",
     "risk.openRedirect.label": "別のURLを連れている",
-    "risk.openRedirect.body": "パラメーターの中に別のURLが入っています。踏み台にして知らないサイトへ送る手口に使われます。行き先を確かめてください。",
+    "risk.openRedirect.body": "パラメーターの中に別のURLが入っています。信頼できるドメインのリンクに見せて、知らないサイトへ送る手口に使われます。右に出ている行き先を確かめてください。",
 
     "modal.title": "URLPurifier のヘルプ",
     "help.about.title": "🎯 このツールについて",
@@ -114,7 +119,7 @@ const MESSAGES = {
     "help.keep.body": "消すと意味が変わる値は残します。検索語、記事の番号、ページ番号、YouTubeの再生位置などです。同じ名前でも、サイトが違えば残します。たとえば t= は X では落としますが、ほかのサイトでは触りません。",
 
     "help.risk.title": "⚠️ 貼る前に見ておきたい点",
-    "help.risk.body": "消す対象ではないけれど、知らないと損をするものを挙げます。URLに利用者名が入っている、ラテン文字に見せかけたホスト名、ふつうと違うポート番号、http のまま、短縮URL、パラメーターが別のURLを連れている、の6つです。",
+    "help.risk.body": "消す対象ではないけれど、知らないと損をするものを挙げます。URLに利用者名が入っている、ラテン文字に見せかけたホスト名、ふつうと違うポート番号、http のまま、短縮URL、パラメーターが別のURLを連れている（行き先も見ます）、共有前に外したい名前のパラメーター、値そのものが見られると困る形、の8つです。",
 
     "help.privacy.title": "🔒 プライバシーと、このツールの限界",
     "help.privacy.local": "入力したURLは外へ送りません。保存もしません。Cookieも使いません。画面の設定（テーマと言語）だけは、この端末に保存します。",
@@ -216,8 +221,13 @@ const MESSAGES = {
     "risk.plainHttp.body": "With http:// the traffic can be read or altered on the way. Check whether an https:// version exists.",
     "risk.shortener.label": "A shortened URL",
     "risk.shortener.body": "You cannot see where it goes. This tool does not expand it, so tracking values may be waiting at the other end.",
+    "risk.targetAlso": "The destination has its own problems: {notes}",
+    "risk.sensitiveName.label": "A parameter you may want to strip before sharing",
+    "risk.sensitiveName.body": "The name suggests contact details or credentials. Removing it can break the link, so this tool leaves it alone. If you are handing the URL to someone, take it out or do not hand it over.",
+    "risk.sensitiveValue.label": "The value itself looks like something private",
+    "risk.sensitiveValue.body": "It looks like an email address, a JWT or a long random string. Sharing it as it is can let someone act as you.",
     "risk.openRedirect.label": "It carries another URL",
-    "risk.openRedirect.body": "One of the parameters contains a second URL. This is how a trusted link gets used to send you somewhere unknown. Check where it leads.",
+    "risk.openRedirect.body": "One of the parameters contains a second URL. A link on a domain you trust can be used to send you somewhere else entirely. Check the destination shown here.",
 
     "modal.title": "URLPurifier help",
     "help.about.title": "🎯 About this tool",
@@ -239,7 +249,7 @@ const MESSAGES = {
     "help.keep.body": "Values that change the meaning of a link are kept: search terms, article and page numbers, the playback position on YouTube. The same name is treated differently per site. For instance t= is dropped on X but left alone elsewhere.",
 
     "help.risk.title": "⚠️ Worth a look before you paste",
-    "help.risk.body": "These are not removed, but they are worth knowing about: a user name embedded in the URL, a host name imitating Latin letters, an unusual port number, plain http, a shortened URL, and a parameter carrying another URL.",
+    "help.risk.body": "These are not removed, but they are worth knowing about: a user name embedded in the URL, a host name imitating Latin letters, an unusual port number, plain http, a shortened URL, a parameter carrying another URL (the destination is checked too), a parameter you would want to strip before sharing, and a value that looks private in itself.",
 
     "help.privacy.title": "🔒 Privacy, and what this tool cannot do",
     "help.privacy.local": "The URLs you type are not sent anywhere, not stored, and no cookies are used. Only your display settings (theme and language) are kept on this device.",

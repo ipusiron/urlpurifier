@@ -61,7 +61,7 @@ What was removed (3)
 
 ### Points out what deserves a second look
 
-Six things that are not removed, but are worth knowing about.
+Things that are not removed, but are worth knowing about.
 
 | Notice | What is going on |
 |---|---|
@@ -70,7 +70,9 @@ Six things that are not removed, but are worth knowing about.
 | An unusual port number | Something other than 80 or 443 |
 | The connection is not encrypted | Still `http://` |
 | A shortened URL | You cannot see where it goes; this tool does not expand it |
-| It carries another URL | A parameter contains a second URL, which is how a trusted link gets used as a stepping stone |
+| It carries another URL | A parameter contains a second URL, which is how a trusted link gets used as a stepping stone. **The destination is extracted and shown, and checked one level deep** |
+| A parameter to strip before sharing | Names such as `email=`, `token=` and `session=` |
+| The value itself looks private | An email address, a JWT or a long random string |
 
 ## 🌐 Japanese and English
 
@@ -113,7 +115,7 @@ There are no dependencies. Node.js 22 or later is required.
 npm test
 ```
 
-42 tests check that:
+49 tests check that:
 
 - Schemes such as `javascript:` are never emitted, and invented URLs are never produced
 - Per-site rules apply only on those sites
@@ -143,6 +145,7 @@ urlpurifier/
 │   ├── markup.test.js        # CSP, markup and accessibility
 │   ├── i18n.test.js          # The dictionaries and the absence of hard-coded text
 │   ├── idn.test.js           # Punycode decoding and look-alike host detection
+│   ├── sensitive.test.js     # Values to strip before sharing, and redirect destinations
 │   └── docs.test.js          # Consistency of the README files
 ├── .github/workflows/test.yml # Runs the tests on push and pull request
 ├── package.json              # Just calls node --test; no dependencies

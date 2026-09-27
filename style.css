@@ -934,3 +934,9 @@ input[type="checkbox"]{
     max-width: none;
   }
 }
+
+/* 連れているURL自体の問題 */
+.risk-target-note{
+  color: var(--warn-text);
+  font-size: .9rem;
+}

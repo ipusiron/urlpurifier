@@ -169,7 +169,7 @@ base-uri 'self'; form-action 'self'; object-src 'none';
 npm test
 ```
 
-58件のテストがあり、次を確かめます。
+59件のテストがあり、次を確かめます。
 
 - `javascript:`などのスキームを出力しないこと、偽のURLを作らないこと
 - サイト別ルールが、そのサイトでだけ効くこと
@@ -201,7 +201,8 @@ urlpurifier/
 │   ├── idn.test.js           # punycodeのデコードと、見せかけホスト名の判定
 │   ├── sensitive.test.js     # 共有前に外したい値と、連れているURLの行き先
 │   ├── custom-structure.test.js # 自分で足した名前と、URLの部品の表
-│   └── docs.test.js          # READMEの整合
+│   ├── docs.test.js          # READMEの整合
+│   └── readme.test.js        # ユースケースの例を計算部で再計算
 ├── .github/workflows/test.yml # pushとpull requestでテストを実行
 ├── package.json              # node --test を呼ぶだけ。依存なし
 ├── CLAUDE.md                 # このリポジトリーで作業するときの前提
@@ -229,6 +230,20 @@ TrimURLやURLTrimmerなどの候補もありましたが、「純化」のニュ
 ## 📄 ライセンス
 
 MIT License - 詳細は [LICENSE](LICENSE) をご覧ください。
+
+## 🎯 ユースケース
+
+### このツールならではの使い方
+
+- 追跡用のパラメーターだけを取り除くことを確かめる（プライバシーの授業）：`https://example.com/p?id=1&utm_source=x&utm_medium=y&fbclid=z&gclid=w`を整えると、`https://example.com/p?id=1`になる。追跡用の`utm_source`・`utm_medium`・`fbclid`・`gclid`の4つだけが外れ、ページに必要な`id=1`は残る。SNSや広告の追跡タグを落とし、必要な情報は残す整え方を確かめられる
+- 安全なスキームだけを通すことを確かめる（入力検証の授業）：`javascript://alert(1)`のような危険なスキームは、エラー（scheme）として弾かれる。通すのはhttpとhttpsだけで、クリックでコードが動くスキームは整形の対象にしない。URLを扱う前に、許可する種類を限る入力検証の考え方を確かめられる
+- Amazonの長いURLを`/dp/ASIN`に短縮することを確かめる（正規化の授業）：`https://www.amazon.co.jp/gp/product/B08XYZ1234/ref=sr_1_1?keywords=abc`をAmazonモードで整えると、`https://www.amazon.co.jp/dp/B08XYZ1234`になる。商品を一意に表すASIN（B08XYZ1234）だけを残し、検索語や参照元を落とす。長いURLを短い正規の形にそろえることを確かめられる
+
+### 一般的な使い方
+
+- SNSやメールで受け取ったURLから、追跡タグを外してから共有する
+- 危険なスキームや紛らわしいホスト名を見分ける入力検証を学ぶ教材にする
+- Amazonなどの長いURLを短く正規化して、読みやすく共有する
 
 ## 🛠 このツールについて
 

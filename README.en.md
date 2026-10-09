@@ -133,7 +133,7 @@ There are no dependencies. Node.js 22 or later is required.
 npm test
 ```
 
-58 tests check that:
+59 tests check that:
 
 - Schemes such as `javascript:` are never emitted, and invented URLs are never produced
 - Per-site rules apply only on those sites
@@ -165,7 +165,8 @@ urlpurifier/
 │   ├── idn.test.js           # Punycode decoding and look-alike host detection
 │   ├── sensitive.test.js     # Values to strip before sharing, and redirect destinations
 │   ├── custom-structure.test.js # Custom names, and the parts table
-│   └── docs.test.js          # Consistency of the README files
+│   ├── docs.test.js          # Consistency of the README files
+│   └── readme.test.js        # Use-case examples recomputed from the core
 ├── .github/workflows/test.yml # Runs the tests on push and pull request
 ├── package.json              # Just calls node --test; no dependencies
 ├── CLAUDE.md                 # Working notes for this repository
@@ -193,6 +194,20 @@ TrimURL and URLTrimmer were among the candidates, but this name says most precis
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+## 🎯 Use cases
+
+### Ways of using this tool in particular
+
+- Confirming that only tracking parameters are removed (privacy classes): cleaning `https://example.com/p?id=1&utm_source=x&utm_medium=y&fbclid=z&gclid=w` gives `https://example.com/p?id=1`. Only the four tracking parameters `utm_source`, `utm_medium`, `fbclid` and `gclid` are dropped, while the `id=1` the page needs stays. You can confirm cleaning that drops social and ad tracking tags and keeps the necessary information
+- Confirming that only safe schemes pass (input-validation classes): a dangerous scheme such as `javascript://alert(1)` is rejected as an error (scheme). Only http and https pass, and schemes that run code on click are not cleaned. You can confirm the input-validation idea of limiting the allowed kinds before handling a URL
+- Confirming that a long Amazon URL is shortened to `/dp/ASIN` (normalization classes): cleaning `https://www.amazon.co.jp/gp/product/B08XYZ1234/ref=sr_1_1?keywords=abc` in Amazon mode gives `https://www.amazon.co.jp/dp/B08XYZ1234`. It keeps only the ASIN (B08XYZ1234) that uniquely identifies the product and drops the search term and the referrer. You can confirm normalizing a long URL into a short canonical form
+
+### General uses
+
+- Remove tracking tags from a URL you received on social media or by email before sharing it
+- Use it as material to learn input validation that tells dangerous schemes and look-alike hostnames apart
+- Normalize long URLs such as Amazon's into a short, readable form for sharing
 
 ## 🛠 About this tool
 

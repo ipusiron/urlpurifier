@@ -169,7 +169,7 @@ base-uri 'self'; form-action 'self'; object-src 'none';
 npm test
 ```
 
-59件のテストがあり、次を確かめます。
+64件のテストがあり、次を確かめます。
 
 - `javascript:`などのスキームを出力しないこと、偽のURLを作らないこと
 - サイト別ルールが、そのサイトでだけ効くこと
@@ -178,6 +178,7 @@ npm test
 - 危険サインを挙げること、ふつうのURLには出さないこと
 - CSP・`style`属性・インラインハンドラー・外部通信を持ち込まないこと
 - ダイアログの組み立てとフォーカスの扱い
+- 保存したテーマを`<head>`で最初の描画の前に付けること（保存がなければダーク）
 - 日本語と英語の辞書のキーが一致し、空の値と差し込みの食い違いがないこと
 - 画面の文言を`script.js`へ直接書いていないこと
 - READMEのYAML・見出し構造・ディレクトリー構成・テスト件数が実態と合っていること
@@ -192,6 +193,7 @@ urlpurifier/
 ├── style.css                 # スタイル（ライト／ダーク、狭い画面に対応）
 ├── i18n.js                   # 日英の辞書と、言語の判定・切り替え
 ├── script.js                 # URLの解釈、除去ルール、危険サインの判定、画面の更新
+├── theme-init.js             # 最初の描画の前に、保存したテーマ（ライト）を付ける
 ├── test/
 │   ├── helper.js             # Nodeから素のスクリプトを読むための足場
 │   ├── url-safety.test.js    # スキームの許可リストとURL判定
@@ -201,6 +203,7 @@ urlpurifier/
 │   ├── idn.test.js           # punycodeのデコードと、見せかけホスト名の判定
 │   ├── sensitive.test.js     # 共有前に外したい値と、連れているURLの行き先
 │   ├── custom-structure.test.js # 自分で足した名前と、URLの部品の表
+│   ├── theme-init.test.js    # 保存したテーマの判定と、<head>での読み込み
 │   ├── docs.test.js          # READMEの整合
 │   └── readme.test.js        # ユースケースの例を計算部で再計算
 ├── .github/workflows/test.yml # pushとpull requestでテストを実行

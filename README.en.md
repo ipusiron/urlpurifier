@@ -133,7 +133,7 @@ There are no dependencies. Node.js 22 or later is required.
 npm test
 ```
 
-59 tests check that:
+64 tests check that:
 
 - Schemes such as `javascript:` are never emitted, and invented URLs are never produced
 - Per-site rules apply only on those sites
@@ -142,6 +142,7 @@ npm test
 - The notices appear when they should, and not on ordinary URLs
 - No CSP relaxation, `style` attribute, inline handler or network call has crept in
 - The dialog is wired correctly and focus is handled
+- The saved theme is applied in `<head>` before the first paint (dark when nothing is saved)
 - The Japanese and English dictionaries have the same keys, no empty values and matching placeholders
 - No display text is hard-coded inside `script.js`
 - The README YAML, heading structure, directory listing and test count match reality
@@ -156,6 +157,7 @@ urlpurifier/
 ├── style.css                 # Styles (light and dark, narrow screens)
 ├── i18n.js                   # The Japanese and English dictionary, and language handling
 ├── script.js                 # URL parsing, removal rules, the notices, and the screen updates
+├── theme-init.js             # Applies the saved theme (light) before the first paint
 ├── test/
 │   ├── helper.js             # Scaffolding to load the plain scripts from Node
 │   ├── url-safety.test.js    # The scheme allow list and URL detection
@@ -165,6 +167,7 @@ urlpurifier/
 │   ├── idn.test.js           # Punycode decoding and look-alike host detection
 │   ├── sensitive.test.js     # Values to strip before sharing, and redirect destinations
 │   ├── custom-structure.test.js # Custom names, and the parts table
+│   ├── theme-init.test.js    # The saved-theme decision, and loading in <head>
 │   ├── docs.test.js          # Consistency of the README files
 │   └── readme.test.js        # Use-case examples recomputed from the core
 ├── .github/workflows/test.yml # Runs the tests on push and pull request

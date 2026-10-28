@@ -1097,15 +1097,10 @@ function setupUI() {
   // テーマ切り替え
   const $btnTheme = document.getElementById("btnTheme");
 
+  // 保存したテーマは、最初の描画の前に theme-init.js（<head>）が <html> へ付ける。
+  // ここではトグルと保存だけを受け持つ。
   // Storageを拒否するブラウザー（プライベートウィンドウなど）では
   // localStorage へ触れるだけで例外になる。設定が戻らないだけなので、握って進む。
-  const readTheme = () => {
-    try {
-      return localStorage.getItem("theme");
-    } catch (e) {
-      return null;
-    }
-  };
   const writeTheme = (value) => {
     try {
       localStorage.setItem("theme", value);
@@ -1113,10 +1108,6 @@ function setupUI() {
       // 保存できなくても画面は動く
     }
   };
-
-  if (readTheme() === "light") {
-    document.documentElement.setAttribute("data-theme", "light");
-  }
 
   $btnTheme.addEventListener("click", () => {
     const currentTheme = document.documentElement.getAttribute("data-theme");

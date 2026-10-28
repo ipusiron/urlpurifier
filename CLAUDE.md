@@ -14,6 +14,7 @@ A static page built from plain scripts (no modules, no bundler, no dependencies)
 
 ```
 index.html   # Markup; display text is bound to the dictionary via data-i18n
+theme-init.js # Loaded in <head> after style.css; sets data-theme="light" before the first paint
 style.css    # Styles, including the light/dark variables
 i18n.js      # MESSAGES (ja/en) and the I18n class. Loaded before script.js
 script.js    # URL parsing, removal rules, the notices, and the screen updates
@@ -50,7 +51,7 @@ No CDN, font, API or analytics. `connect-src 'none'` stays.
 `script.js` calls `uiText(key)`. The `ja` and `en` tables must have identical keys and identical `{placeholder}` names.
 
 **9. Storage access is always wrapped.**
-Only the theme and the language are stored, and both reads and writes sit in `try`/`catch`. A browser that refuses storage must still run every feature. Do not store the URLs the user types; the README and the help both promise that.
+Only the theme and the language are stored, and both reads and writes sit in `try`/`catch`. The theme is read in `theme-init.js` and written in `script.js`; without a saved `light` the page stays dark (the OS setting is not consulted). A browser that refuses storage must still run every feature. Do not store the URLs the user types; the README and the help both promise that.
 
 ## Language handling
 
